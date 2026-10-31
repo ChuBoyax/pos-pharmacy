@@ -10,16 +10,62 @@ App.ready.then(async () => {
     const form = $('#checkout');
 
     /* ---------- Catalogue ---------- */
+    const chips = $('#chips');
+
     App.api('/categories').then((r) => {
         if (!r.ok) return;
-        $('#chips').insertAdjacentHTML('beforeend', r.data.map((c) => `<button data-c="${c.id}">${esc(c.name)}</button>`).join(''));
+        chips.insertAdjacentHTML('beforeend', r.data.map((c) => `<button data-c="${c.id}">${esc(c.name)}</button>`).join(''));
+        syncChipNav();
     });
 
-    $('#chips').addEventListener('click', (e) => {
+    // The category bar scrolls sideways: arrows, mouse wheel and click-drag on desktop, swipe on touch.
+    function syncChipNav() {
+        const max = chips.scrollWidth - chips.clientWidth;
+        const left = chips.scrollLeft > 2;
+        const right = chips.scrollLeft < max - 2;
+        $('#chip-prev').hidden = !left;
+        $('#chip-next').hidden = !right;
+        $('#chips-wrap').classList.toggle('fade-l', left);
+        $('#chips-wrap').classList.toggle('fade-r', right);
+    }
+    chips.addEventListener('scroll', syncChipNav, { passive: true });
+    new ResizeObserver(syncChipNav).observe(chips);
+    $('#chip-prev').addEventListener('click', () => chips.scrollBy({ left: -chips.clientWidth * 0.7, behavior: 'smooth' }));
+    $('#chip-next').addEventListener('click', () => chips.scrollBy({ left: chips.clientWidth * 0.7, behavior: 'smooth' }));
+    chips.addEventListener('wheel', (e) => {
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || chips.scrollWidth <= chips.clientWidth) return;
+        e.preventDefault();
+        chips.scrollLeft += e.deltaY;
+    }, { passive: false });
+
+    let drag = null;
+    let dragged = false;
+    chips.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return;
+        drag = { x: e.clientX, left: chips.scrollLeft };
+        dragged = false;
+    });
+    window.addEventListener('pointermove', (e) => {
+        if (!drag) return;
+        const dx = e.clientX - drag.x;
+        if (Math.abs(dx) > 5) {
+            dragged = true;
+            chips.classList.add('dragging');
+        }
+        if (dragged) chips.scrollLeft = drag.left - dx;
+    });
+    window.addEventListener('pointerup', () => {
+        drag = null;
+        chips.classList.remove('dragging');
+    });
+
+    chips.addEventListener('click', (e) => {
         const b = e.target.closest('button');
+        if (dragged) return (dragged = false); // a drag shouldn't also pick a category
         if (!b) return;
         category = b.dataset.c;
-        [...$('#chips').children].forEach((c) => c.classList.toggle('on', c === b));
+        [...chips.children].forEach((c) => c.classList.toggle('on', c === b));
+        b.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
         loadProducts();
     });
 
@@ -38,7 +84,7 @@ App.ready.then(async () => {
         $('#products').innerHTML = products.map((m) => {
             const inCart = cart.get(m.id)?.qty ?? 0;
             const left = m.stock - inCart;
-            return `<button class="prod ${inCart ? 'in-cart' : ''}" data-id="${m.id}" ${left <= 0 ? 'disabled' : ''}>
+            return `<button class="prod ${inCart ? 'in-cart' : ''}" data-id="${m.id}" title="${esc(m.name)}${m.generic_name ? ' — ' + esc(m.generic_name) : ''}" ${left <= 0 ? 'disabled' : ''}>
                 ${inCart ? `<span class="qty-badge">${inCart}</span>` : ''}
                 ${m.requires_prescription ? '<span class="tag rx">RX</span>' : ''}
                 ${App.thumb(m)}
@@ -159,11 +205,12 @@ App.ready.then(async () => {
         $('#sum').innerHTML = (discounted
             ? row('Subtotal', peso(t.subtotal)) + row('Less: VAT exemption', '−' + peso(t.vatExempt)) + row(`Less: ${App.labels.discount[$('#discount').value]} ${settings.senior_discount_rate}%`, '−' + peso(t.discount))
             : row(`Includes VAT (${settings.vat_rate}%)`, peso(t.vat)))
-            + `<div class="total"><span>Total</span><span class="num">${peso(t.total)}</span></div>`;
+            + `<div class="total"><span>Total due</span><span class="num">${peso(t.total)}</span></div>`;
 
-        // Quick-cash buttons: exact amount plus the next round bills.
-        const bills = [...new Set([t.total, ...[20, 50, 100, 500, 1000].map((b) => Math.ceil(t.total / b) * b)])].filter((v) => v > 0).slice(0, 5);
-        $('#quick').innerHTML = bills.map((v, i) => `<button type="button" data-v="${v}">${i === 0 ? 'Exact' : peso(v, 0)}</button>`).join('');
+        // Quick-cash buttons: the next round bills above the total ("Exact" lives on the keypad).
+        const bills = [...new Set([20, 50, 100, 500, 1000].map((b) => Math.ceil(t.total / b) * b))].filter((v) => v > t.total).slice(0, 4);
+        $('#quick').innerHTML = bills.map((v) => `<button type="button" data-v="${v}">${peso(v, 0)}</button>`).join('');
+        $('#quick').hidden = !bills.length || !t.total;
 
         const tendered = +$('#tendered').value || 0;
         const change = round2(tendered - t.total);
@@ -177,7 +224,31 @@ App.ready.then(async () => {
     }
 
     $('#discount').addEventListener('change', render);
-    $('#tendered').addEventListener('input', render);
+    $('#tendered').addEventListener('input', () => {
+        // Typing on a physical keyboard: keep digits and one decimal point, max 2 decimals.
+        const el = $('#tendered');
+        const [whole, ...rest] = el.value.replace(/[^\d.]/g, '').split('.');
+        el.value = rest.length ? `${whole}.${rest.join('').slice(0, 2)}` : whole;
+        render();
+    });
+    $('#keypad').addEventListener('click', (e) => {
+        const key = e.target.closest('button')?.dataset.k;
+        if (!key) return;
+        let v = $('#tendered').value;
+
+        if (key === 'back') v = v.slice(0, -1);
+        else if (key === 'clear') v = '';
+        else if (key === 'exact') v = totals().total.toFixed(2);
+        else if (key === '.') v = v.includes('.') ? v : (v || '0') + '.';
+        else {
+            const next = (v === '0' ? '' : v) + key;
+            if (/\.\d{3,}$/.test(next) || next.replace('.', '').length > 9) return;
+            v = next;
+        }
+
+        $('#tendered').value = v;
+        render();
+    });
     $('#quick').addEventListener('click', (e) => {
         const b = e.target.closest('button');
         if (!b) return;

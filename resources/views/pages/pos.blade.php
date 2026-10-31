@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Point of Sale')
+@section('page-class', 'fill')
 
 @section('content')
     <div class="head">
@@ -12,7 +13,7 @@
     </div>
 
     <div class="pos">
-        <section>
+        <section class="pos-left">
             <div class="pos-search">
                 <label class="in-search">
                     <svg class="i"><use href="#i-search"/></svg>
@@ -20,7 +21,11 @@
                     <kbd>/</kbd>
                 </label>
             </div>
-            <div class="chips" id="chips"><button class="on" data-c="">All</button></div>
+            <div class="chips-wrap" id="chips-wrap">
+                <button type="button" class="chip-nav prev" id="chip-prev" aria-label="Scroll categories left" hidden><svg class="i"><use href="#i-chevron"/></svg></button>
+                <div class="chips" id="chips"><button class="on" data-c="">All</button></div>
+                <button type="button" class="chip-nav next" id="chip-next" aria-label="Scroll categories right" hidden><svg class="i"><use href="#i-chevron"/></svg></button>
+            </div>
             <div class="products" id="products"></div>
         </section>
 
@@ -64,7 +69,7 @@
                 <div class="sum" id="sum"></div>
 
                 <div>
-                    <div class="lbl-sm" style="margin-bottom:6px">Payment method</div>
+                    <div class="lbl-sm">Payment method</div>
                     <div class="pay" id="pay">
                         <button type="button" data-m="cash" class="on"><svg class="i"><use href="#i-cash"/></svg>Cash</button>
                         <button type="button" data-m="gcash"><svg class="i"><use href="#i-phone"/></svg>GCash</button>
@@ -72,13 +77,24 @@
                     </div>
                 </div>
 
-                <div id="pay-cash" style="display:grid;gap:8px">
-                    <label class="f">
+                <div id="pay-cash" class="cash">
+                    <label class="tender">
                         <span>Amount tendered</span>
-                        <input class="input num" name="amount_paid" id="tendered" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
-                        <small class="f-err" data-err="amount_paid"></small>
+                        {{-- inputmode="none": use the on-screen keypad, so phones don't pop up their keyboard --}}
+                        <input class="num" name="amount_paid" id="tendered" type="text" inputmode="none" autocomplete="off" placeholder="₱0.00">
                     </label>
+                    <small class="f-err" data-err="amount_paid"></small>
                     <div class="quick" id="quick"></div>
+                    <div class="keypad" id="keypad">
+                        <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+                        <button type="button" data-k="back" class="fn" aria-label="Backspace"><svg class="i"><use href="#i-backspace"/></svg></button>
+                        <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+                        <button type="button" data-k="clear" class="fn">C</button>
+                        <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+                        <button type="button" data-k="00">00</button>
+                        <button type="button" data-k="0" class="wide">0</button><button type="button" data-k=".">.</button>
+                        <button type="button" data-k="exact" class="exact">Exact</button>
+                    </div>
                     <div class="change" id="change"><span>Change</span><span class="num">₱0.00</span></div>
                 </div>
 

@@ -27,13 +27,19 @@ a{color:inherit;text-decoration:none}
 
 /* ---------- Shell ---------- */
 .shell{--side-w:264px;display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100vh;transition:grid-template-columns .25s cubic-bezier(.2,.7,.2,1)}
-.side{position:sticky;top:0;height:100vh;background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;padding:20px 14px;gap:22px;overflow-y:auto}
+.side{position:sticky;top:0;height:100vh;background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;padding:20px 14px;gap:14px;overflow-y:auto;scrollbar-width:none}
 .logo{display:flex;align-items:center;gap:12px;padding:6px 10px 20px;margin:0 -14px;padding-left:24px;border-bottom:1px solid var(--side-line);color:#fff}
 .logo b{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(140deg,#60a5fa,#1d4ed8);box-shadow:0 8px 20px -4px rgba(37,99,235,.55),inset 0 1px 0 rgba(255,255,255,.25)}
 .logo b svg{width:20px;height:20px;fill:#fff}
 .logo strong{display:block;font-size:16px;font-weight:700;letter-spacing:-.3px;line-height:1.2;white-space:nowrap}
 .logo small{display:block;margin-top:3px;font-size:10.5px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:#7f9cd0;white-space:nowrap}
-.nav-label{font-size:11px;font-weight:600;letter-spacing:.9px;text-transform:uppercase;color:#6580ad;padding:0 12px 6px}
+.nav-label{width:100%;display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:600;letter-spacing:.9px;text-transform:uppercase;color:#6580ad;padding:6px 12px;border-radius:8px;transition:color .15s}
+.nav-label:hover{color:#c7d6f2}
+.nav-label .i{width:14px;height:14px;stroke-width:2.2;transition:transform .2s}
+.nav-group.closed .nav-label .i{transform:rotate(-90deg)}
+.nav-wrap{display:grid;grid-template-rows:1fr;transition:grid-template-rows .22s cubic-bezier(.2,.7,.2,1)}
+.nav-wrap>.nav{min-height:0;overflow:hidden;margin:0 -14px;padding:4px 14px 0}
+.nav-group.closed .nav-wrap{grid-template-rows:0fr}
 .nav{display:flex;flex-direction:column;gap:2px}
 .nav a{position:relative;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;font-weight:500;transition:.15s}
 .nav a:hover{background:var(--side-line);color:#fff}
@@ -181,7 +187,10 @@ a{color:inherit;text-decoration:none}
   html[data-side=collapsed] .side{padding:20px 12px;overflow-x:hidden}
   html[data-side=collapsed] .logo{margin:0 -12px;padding:6px 0 20px;justify-content:center}
   html[data-side=collapsed] .logo div{display:none}
-  html[data-side=collapsed] .nav-label{height:1px;padding:0;margin:4px 8px 10px;font-size:0;background:var(--side-line)}
+  html[data-side=collapsed] .nav-label{height:1px;padding:0;margin:4px 8px 6px;width:auto;font-size:0;background:var(--side-line);pointer-events:none}
+  html[data-side=collapsed] .nav-label .i{display:none}
+  html[data-side=collapsed] .nav-group.closed .nav-wrap{grid-template-rows:1fr}
+  html[data-side=collapsed] .nav-wrap>.nav{margin:0 -12px;padding:0 12px}
   html[data-side=collapsed] .nav a{justify-content:center;padding:11px 0}
   html[data-side=collapsed] .nav a .lbl{display:none}
   html[data-side=collapsed] .nav a.on::before{left:-12px}
