@@ -36,5 +36,5 @@
 @endsection
 
 @push('scripts')
-    <script src="/js/pages/users.js"></script>
+    <script src="@asset('js/pages/users.js')"></script>
 @endpush

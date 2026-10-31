@@ -80,5 +80,5 @@
 @endsection
 
 @push('scripts')
-    <script src="/js/pages/dashboard.js"></script>
+    <script src="@asset('js/pages/dashboard.js')"></script>
 @endpush

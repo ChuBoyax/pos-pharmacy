@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SupplierRequest;
 use App\Models\Batch;
 use App\Models\Medicine;
 use App\Models\Supplier;
@@ -33,33 +34,39 @@ class SupplierController extends Controller
     {
         $request->validate(['medicine_id' => ['nullable', 'exists:medicines,id']]);
 
+        // Only the columns the maths needs: this scans every delivery ever received.
         $batches = Batch::query()
-            ->with('supplier:id,name', 'medicine:id,name,sku,unit,price')
             ->whereNotNull('supplier_id')
             ->when($request->medicine_id, fn ($q, $id) => $q->where('medicine_id', $id))
             ->orderBy('received_at')
             ->orderBy('id')
-            ->get();
+            ->get(['medicine_id', 'supplier_id', 'cost', 'quantity_received', 'received_at', 'expiry_date']);
+
+        $names = Supplier::whereIn('id', $batches->pluck('supplier_id')->unique())->pluck('name', 'id');
+        $medicineColumns = ['id', 'name', 'sku', 'unit', 'price'];
 
         if ($request->medicine_id) {
-            $offers = $this->offers($batches);
+            $offers = $this->offers($batches, $names);
 
             return response()->json([
-                'medicine' => Medicine::find($request->medicine_id, ['id', 'name', 'sku', 'unit', 'price']),
+                'medicine' => Medicine::find($request->medicine_id, $medicineColumns),
                 'suppliers' => $offers,
                 'best_supplier_id' => $offers->first()['supplier_id'] ?? null,
             ]);
         }
 
-        return response()->json($batches->groupBy('medicine_id')
-            ->map(fn ($rows) => [$rows->first()->medicine, $this->offers($rows)])
-            ->filter(fn ($pair) => $pair[1]->count() >= 2)
-            ->map(fn ($pair) => [
-                'medicine' => $pair[0],
-                'suppliers' => $pair[1]->count(),
-                'best' => $pair[1]->first(),
-                'highest_cost' => $pair[1]->max('last_cost'),
-                'saving_per_unit' => round($pair[1]->max('last_cost') - $pair[1]->first()['last_cost'], 2),
+        $compared = $batches->groupBy('medicine_id')
+            ->map(fn ($rows) => $this->offers($rows, $names))
+            ->filter(fn ($offers) => $offers->count() >= 2);
+        $medicines = Medicine::whereIn('id', $compared->keys())->get($medicineColumns)->keyBy('id');
+
+        return response()->json($compared
+            ->map(fn ($offers, $medicineId) => [
+                'medicine' => $medicines->get($medicineId),
+                'suppliers' => $offers->count(),
+                'best' => $offers->first(),
+                'highest_cost' => $offers->max('last_cost'),
+                'saving_per_unit' => round($offers->max('last_cost') - $offers->first()['last_cost'], 2),
             ])
             ->sortByDesc(fn ($row) => $row['highest_cost'] > 0 ? $row['saving_per_unit'] / $row['highest_cost'] : 0)
             ->values());
@@ -69,17 +76,18 @@ class SupplierController extends Controller
      * One row per supplier, cheapest latest price first.
      *
      * @param  Collection<int, Batch>  $batches  ordered oldest delivery first
+     * @param  Collection<int, string>  $names  supplier names keyed by id
      * @return Collection<int, array<string, mixed>>
      */
-    private function offers(Collection $batches): Collection
+    private function offers(Collection $batches, Collection $names): Collection
     {
-        return $batches->groupBy('supplier_id')->map(function ($rows) {
+        return $batches->groupBy('supplier_id')->map(function ($rows) use ($names) {
             $units = $rows->sum('quantity_received');
             $last = $rows->last();
 
             return [
                 'supplier_id' => $last->supplier_id,
-                'supplier' => $last->supplier->name,
+                'supplier' => $names->get($last->supplier_id),
                 'last_cost' => (float) $last->cost,
                 'avg_cost' => $units ? round($rows->sum(fn ($b) => $b->cost * $b->quantity_received) / $units, 2) : 0.0,
                 'min_cost' => (float) $rows->min('cost'),
@@ -93,14 +101,14 @@ class SupplierController extends Controller
         })->sortBy('last_cost')->values();
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(SupplierRequest $request): JsonResponse
     {
-        return response()->json(Supplier::create($this->validated($request)), 201);
+        return response()->json(Supplier::create($request->validated()), 201);
     }
 
-    public function update(Request $request, Supplier $supplier): JsonResponse
+    public function update(SupplierRequest $request, Supplier $supplier): JsonResponse
     {
-        $supplier->update($this->validated($request));
+        $supplier->update($request->validated());
 
         return response()->json($supplier);
     }
@@ -110,19 +118,5 @@ class SupplierController extends Controller
         $supplier->delete();
 
         return response()->json(['message' => 'Supplier deleted.']);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function validated(Request $request): array
-    {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'contact_person' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'address' => ['nullable', 'string', 'max:255'],
-        ]);
     }
 }

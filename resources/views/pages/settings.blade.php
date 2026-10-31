@@ -60,5 +60,5 @@
 @endsection
 
 @push('scripts')
-    <script src="/js/pages/settings.js"></script>
+    <script src="@asset('js/pages/settings.js')"></script>
 @endpush

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReceiveStockRequest;
 use App\Models\Batch;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
@@ -34,17 +35,9 @@ class BatchController extends Controller
     /**
      * Receive a new delivery of stock.
      */
-    public function store(Request $request): JsonResponse
+    public function store(ReceiveStockRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'medicine_id' => ['required', 'exists:medicines,id'],
-            'supplier_id' => ['nullable', 'exists:suppliers,id'],
-            'batch_no' => ['required', 'string', 'max:50'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'cost' => ['nullable', 'numeric', 'min:0'],
-            'expiry_date' => ['required', 'date', 'after:today'],
-            'received_at' => ['nullable', 'date', 'before_or_equal:today'],
-        ]);
+        $data = $request->validated();
 
         $batch = Batch::create([
             ...$data,

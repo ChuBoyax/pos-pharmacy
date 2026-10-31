@@ -66,5 +66,5 @@
 @endsection
 
 @push('scripts')
-    <script src="/js/pages/reports.js"></script>
+    <script src="@asset('js/pages/reports.js')"></script>
 @endpush

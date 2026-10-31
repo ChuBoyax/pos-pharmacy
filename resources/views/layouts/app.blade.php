@@ -24,8 +24,8 @@
     <title>@yield('title') · PharmaPOS</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700,800" rel="stylesheet">
-    <link rel="stylesheet" href="/css/app.css">
-    <link rel="stylesheet" href="/css/pages.css">
+    <link rel="stylesheet" href="@asset('css/app.css')">
+    <link rel="stylesheet" href="@asset('css/pages.css')">
 </head>
 <body data-can="@yield('can')" @isset(Role::MENUS[$page]) data-menu="{{ $page }}" @endisset>
 @include('partials.icons')
@@ -88,8 +88,8 @@
 <div class="toasts" id="toasts"></div>
 <div id="print-area"></div>
 
-<script src="/js/auth.js"></script>
-<script src="/js/app.js"></script>
+<script src="@asset('js/auth.js')"></script>
+<script src="@asset('js/app.js')"></script>
 @stack('scripts')
 </body>
 </html>
