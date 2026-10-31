@@ -63,7 +63,7 @@ a{color:inherit;text-decoration:none}
 .dropdown .danger{color:var(--bad)}
 
 /* ---------- Page ---------- */
-.page{padding:32px 36px 56px;display:flex;flex-direction:column;gap:24px;max-width:1500px;width:100%}
+.page{padding:32px 36px 56px;display:flex;flex-direction:column;gap:24px;width:100%}
 .head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
 .eyebrow{font-size:11.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
 .head h1{font-size:26px;font-weight:700;letter-spacing:-.6px;margin-top:6px}
