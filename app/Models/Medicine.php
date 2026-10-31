@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ImageStore;
 use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -20,11 +21,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Medicine extends Model
 {
     /**
-     * Relative URL so it works whatever host the app is served from.
+     * A Vercel Blob URL in production, or a relative /storage URL for locally stored files.
      */
     protected function imageUrl(): Attribute
     {
-        return Attribute::get(fn () => $this->image_path ? '/storage/'.$this->image_path : null);
+        return Attribute::get(fn () => app(ImageStore::class)->url($this->image_path));
     }
 
     protected function casts(): array

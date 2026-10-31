@@ -7,12 +7,14 @@ use App\Http\Requests\MedicineRequest;
 use App\Models\Medicine;
 use App\Models\SaleItem;
 use App\Services\ImageOptimizer;
+use App\Services\ImageStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class MedicineController extends Controller
 {
+    public function __construct(private ImageStore $images) {}
+
     public function index(Request $request): JsonResponse
     {
         $medicines = Medicine::query()
@@ -58,10 +60,7 @@ class MedicineController extends Controller
 
         $old = $medicine->image_path;
         $medicine->update(['image_path' => $optimizer->store($request->file('image'), 'medicines')]);
-
-        if ($old) {
-            Storage::disk('public')->delete($old);
-        }
+        $this->images->delete($old);
 
         return response()->json($medicine);
     }
@@ -69,7 +68,7 @@ class MedicineController extends Controller
     public function deleteImage(Medicine $medicine): JsonResponse
     {
         if ($medicine->image_path) {
-            Storage::disk('public')->delete($medicine->image_path);
+            $this->images->delete($medicine->image_path);
             $medicine->update(['image_path' => null]);
         }
 
@@ -85,10 +84,7 @@ class MedicineController extends Controller
             return response()->json(['message' => 'Medicine has stock history, so it was deactivated instead.']);
         }
 
-        if ($medicine->image_path) {
-            Storage::disk('public')->delete($medicine->image_path);
-        }
-
+        $this->images->delete($medicine->image_path);
         $medicine->delete();
 
         return response()->json(['message' => 'Medicine deleted.']);

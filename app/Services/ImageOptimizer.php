@@ -4,8 +4,6 @@ namespace App\Services;
 
 use GdImage;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -15,12 +13,13 @@ use Illuminate\Validation\ValidationException;
 class ImageOptimizer
 {
     public function __construct(
+        private ImageStore $images,
         private int $maxSide = 800,
         private int $quality = 80,
     ) {}
 
     /**
-     * @return string the stored path on the public disk
+     * @return string the stored reference (see ImageStore)
      */
     public function store(UploadedFile $file, string $directory): string
     {
@@ -41,10 +40,7 @@ class ImageOptimizer
         $bytes = (string) ob_get_clean();
         imagedestroy($image);
 
-        $path = trim($directory, '/').'/'.Str::uuid().'.webp';
-        Storage::disk('public')->put($path, $bytes);
-
-        return $path;
+        return $this->images->put($bytes, $directory, 'webp', 'image/webp');
     }
 
     private function scaleDown(GdImage $image, int $maxSide): GdImage

@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // Product images. Vercel injects this token when a Blob store is linked to the project;
+    // without it images are kept on the local "public" disk (see App\Services\ImageStore).
+    'vercel_blob' => [
+        'token' => env('BLOB_READ_WRITE_TOKEN'),
+    ],
+
 ];

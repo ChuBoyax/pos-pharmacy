@@ -9,8 +9,10 @@ use App\Models\Role;
 use App\Models\Sale;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\ImageStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -349,6 +351,28 @@ class PharmacyTest extends TestCase
 
         Sanctum::actingAs($this->user('cashier'));
         $this->post("/api/medicines/{$medicine->id}/image", ['image' => UploadedFile::fake()->image('c.png')], ['Accept' => 'application/json'])->assertForbidden();
+    }
+
+    public function test_images_go_to_vercel_blob_when_a_token_is_configured(): void
+    {
+        $this->app->instance(ImageStore::class, new ImageStore('blob-token'));
+        $blobUrl = 'https://store.public.blob.vercel-storage.com/medicines/a.webp';
+        Http::fake([
+            'vercel.com/api/blob/delete' => Http::response(null),
+            'vercel.com/api/blob/*' => Http::response(['url' => $blobUrl]),
+        ]);
+        Sanctum::actingAs($this->user('pharmacist'));
+        $medicine = $this->medicine();
+
+        $this->post("/api/medicines/{$medicine->id}/image", ['image' => UploadedFile::fake()->image('a.png')], ['Accept' => 'application/json'])
+            ->assertOk()->assertJsonPath('image_url', $blobUrl);
+
+        Http::assertSent(fn ($request) => $request->method() === 'PUT'
+            && $request->hasHeader('Authorization', 'Bearer blob-token')
+            && $request->hasHeader('x-content-type', 'image/webp'));
+
+        $this->deleteJson("/api/medicines/{$medicine->id}/image")->assertOk()->assertJsonPath('image_url', null);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/delete') && $request['urls'] === [$blobUrl]);
     }
 
     public function test_uploaded_images_are_resized_and_converted_to_webp(): void
