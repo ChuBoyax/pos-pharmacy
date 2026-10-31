@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Requests\LoginRequest;
 use App\Models\Batch;
 use App\Models\Medicine;
 use App\Models\Role;
@@ -59,6 +60,24 @@ class PharmacyTest extends TestCase
 
         $this->postJson('/api/login', ['email' => 'a@b.test', 'password' => 'secret123'])
             ->assertStatus(422);
+    }
+
+    public function test_login_validates_input_and_locks_out_repeated_failures(): void
+    {
+        User::factory()->create(['email' => 'a@b.test', 'password' => 'secret123']);
+
+        $this->postJson('/api/login', ['email' => 'not-an-email'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['email', 'password']);
+
+        // Five wrong passwords lock that email out, even for the right password.
+        foreach (range(1, LoginRequest::MAX_ATTEMPTS) as $attempt) {
+            $this->postJson('/api/login', ['email' => 'a@b.test', 'password' => 'wrong'])->assertStatus(422);
+        }
+
+        $this->postJson('/api/login', ['email' => 'a@b.test', 'password' => 'secret123'])
+            ->assertStatus(429)
+            ->assertJsonPath('errors.email.0', fn ($message) => str_starts_with($message, 'Too many login attempts'));
     }
 
     public function test_checkout_deducts_from_the_earliest_expiring_batch_first(): void
