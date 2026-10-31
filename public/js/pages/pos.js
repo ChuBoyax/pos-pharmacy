@@ -87,12 +87,12 @@ App.ready.then(async () => {
             return `<button class="prod ${inCart ? 'in-cart' : ''}" data-id="${m.id}" title="${esc(m.name)}${m.generic_name ? ' — ' + esc(m.generic_name) : ''}" ${left <= 0 ? 'disabled' : ''}>
                 ${inCart ? `<span class="qty-badge">${inCart}</span>` : ''}
                 ${m.requires_prescription ? '<span class="tag rx">RX</span>' : ''}
-                ${App.thumb(m)}
+                ${App.thumb(m, 'prod-img')}
                 <b>${esc(m.name)}</b>
                 <small>${esc(m.generic_name ?? '')}</small>
                 <div class="foot2">
                     <span class="price num">${peso(m.price)}</span>
-                    <span class="stk ${left <= m.reorder_level ? 'low' : ''}">${num(left)} ${esc(m.unit)}</span>
+                    <span class="stk ${left <= 0 ? 'out' : left <= m.reorder_level ? 'low' : ''}" title="${num(left)} ${esc(m.unit)} in stock">Stock: ${num(left)}</span>
                 </div>
             </button>`;
         }).join('');
