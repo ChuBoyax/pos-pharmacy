@@ -2,14 +2,17 @@
     use App\Models\Role;
 
     // Route => icon. Labels and required permissions come from Role::MENUS.
+    // 'inventory' is one sidebar item for the medicines / stock / suppliers tabs.
     $nav = [
-        'Main' => ['dashboard' => 'grid', 'pos' => 'cart', 'transactions' => 'receipt'],
-        'Inventory' => ['medicines' => 'pill', 'stock' => 'box', 'suppliers' => 'truck'],
-        'Management' => ['reports' => 'chart', 'users' => 'users', 'roles' => 'shield', 'settings' => 'cog'],
+        'dashboard' => 'grid', 'pos' => 'cart', 'transactions' => 'receipt', 'inventory' => 'box',
+        'reports' => 'chart', 'users' => 'users', 'roles' => 'shield', 'settings' => 'cog',
     ];
     // Not a role-assignable menu: only the super admin ever sees it.
     $menus = Role::MENUS + ['roles' => ['Roles & Permissions', 'roles.manage']];
     $page = Route::currentRouteName();
+    $inventoryTabs = ['medicines', 'stock', 'suppliers'];
+    // [url, permissions, menu key] per tab, so app.js can point Inventory at the first one allowed.
+    $tabLinks = array_map(fn ($t) => [route($t), $menus[$t][1], $t], $inventoryTabs);
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -41,37 +44,25 @@
             <div><strong>Sto. Domingo</strong><small>Infirmary · Pharmacy</small></div>
         </div>
 
-        @foreach ($nav as $group => $links)
-            <div class="nav-group" data-group="{{ Str::slug($group) }}">
-                <button type="button" class="nav-label" aria-expanded="true">
-                    {{ $group }}<svg class="i"><use href="#i-down"/></svg>
-                </button>
-                <div class="nav-wrap">
-                    <nav class="nav">
-                        @foreach ($links as $route => $icon)
-                            @php [$label, $can] = $menus[$route]; @endphp
-                            <a href="{{ route($route) }}" title="{{ $label }}" @if ($can) data-can="{{ $can }}" @endif @isset(Role::MENUS[$route]) data-menu="{{ $route }}" @endisset @class(['on' => request()->routeIs($route)])>
-                                <svg class="i"><use href="#i-{{ $icon }}"/></svg><span class="lbl">{{ $label }}</span>
-                                @if ($route === 'stock')
-                                    <span class="badge" id="stock-badge" hidden></span>
-                                @endif
-                            </a>
-                        @endforeach
-                    </nav>
-                </div>
-            </div>
-        @endforeach
+        <nav class="nav">
+            @foreach ($nav as $route => $icon)
+                @if ($route === 'inventory')
+                    {{-- Points at the first tab the user may open; app.js fills in the href. --}}
+                    <a href="{{ route('medicines') }}" title="Inventory" id="nav-inventory"
+                       data-tabs="{{ json_encode($tabLinks) }}"
+                       @class(['on' => request()->routeIs(...$inventoryTabs)])>
+                        <svg class="i"><use href="#i-box"/></svg><span class="lbl">Inventory</span>
+                        <span class="badge stock-badge" hidden></span>
+                    </a>
+                    @continue
+                @endif
+                @php [$label, $can] = $menus[$route]; @endphp
+                <a href="{{ route($route) }}" title="{{ $label }}" @if ($can) data-can="{{ $can }}" @endif @isset(Role::MENUS[$route]) data-menu="{{ $route }}" @endisset @class(['on' => request()->routeIs($route)])>
+                    <svg class="i"><use href="#i-{{ $icon }}"/></svg><span class="lbl">{{ $label }}</span>
+                </a>
+            @endforeach
+        </nav>
     </aside>
-    <script>
-        // Restore folded nav groups before first paint so they don't flash open.
-        try {
-            JSON.parse(localStorage.getItem('pos_nav_closed') || '[]').forEach((g) => {
-                const el = document.querySelector(`.nav-group[data-group="${g}"]`);
-                el?.classList.add('closed');
-                el?.querySelector('.nav-label').setAttribute('aria-expanded', 'false');
-            });
-        } catch (e) {}
-    </script>
 
     <div class="wrap">
         <header class="bar">

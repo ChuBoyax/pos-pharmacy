@@ -21,7 +21,7 @@
     <div class="card">
         <div class="toolbar">
             <label class="in-search"><svg class="i"><use href="#i-search"/></svg><input class="input" id="q" type="search" placeholder="Name or email"></label>
-            <select class="input" id="role">
+            <select class="input" id="role-filter">
                 <option value="">All roles</option>
             </select>
         </div>

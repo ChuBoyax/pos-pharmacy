@@ -52,9 +52,12 @@ textarea.input{resize:vertical;min-height:80px}
 .in-search .i{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted)}
 .toolbar .in-search .input{width:100%;padding-left:36px}
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
-.tabs button{padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;align-items:center;gap:8px}
-.tabs button:hover{color:var(--ink)}
-.tabs button.on{color:var(--brand-ink);border-color:var(--brand)}
+.tabs button,.tabs a{padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.tabs button:hover,.tabs a:hover{color:var(--ink)}
+.tabs button.on,.tabs a.on{color:var(--brand-ink);border-color:var(--brand)}
+.inv-tabs{margin-bottom:22px;scrollbar-width:none}
+.inv-tabs .i{width:17px;height:17px}
+.inv-tabs .stock-badge{background:var(--bad-soft);color:var(--bad);border-color:transparent;font-weight:700}
 .tabs .count{font-size:11px;padding:1px 7px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line)}
 .tbl td{white-space:nowrap}
 .tbl td.wrap{white-space:normal;min-width:180px}

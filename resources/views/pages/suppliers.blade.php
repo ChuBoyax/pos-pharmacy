@@ -4,6 +4,8 @@
 @section('can', 'suppliers.manage')
 
 @section('content')
+    @include('partials.inventory-tabs')
+
     <div class="head">
         <div>
             <div class="eyebrow">Inventory</div>
