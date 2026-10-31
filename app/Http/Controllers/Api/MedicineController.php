@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\MedicineRequest;
 use App\Models\Medicine;
 use App\Models\SaleItem;
 use App\Services\ImageOptimizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 
 class MedicineController extends Controller
 {
@@ -36,14 +36,14 @@ class MedicineController extends Controller
         return response()->json($medicine->load('category:id,name', 'supplier:id,name'));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(MedicineRequest $request): JsonResponse
     {
-        return response()->json(Medicine::create($this->validated($request)), 201);
+        return response()->json(Medicine::create($request->validated()), 201);
     }
 
-    public function update(Request $request, Medicine $medicine): JsonResponse
+    public function update(MedicineRequest $request, Medicine $medicine): JsonResponse
     {
-        $medicine->update($this->validated($request, $medicine));
+        $medicine->update($request->validated());
 
         return response()->json($medicine);
     }
@@ -92,26 +92,5 @@ class MedicineController extends Controller
         $medicine->delete();
 
         return response()->json(['message' => 'Medicine deleted.']);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function validated(Request $request, ?Medicine $medicine = null): array
-    {
-        return $request->validate([
-            'sku' => ['required', 'string', 'max:50', Rule::unique('medicines')->ignore($medicine?->id)],
-            'name' => ['required', 'string', 'max:255'],
-            'generic_name' => ['nullable', 'string', 'max:255'],
-            'category_id' => ['nullable', 'exists:categories,id'],
-            'supplier_id' => ['nullable', 'exists:suppliers,id'],
-            'unit' => ['required', 'string', 'max:30'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'cost' => ['nullable', 'numeric', 'min:0'],
-            'reorder_level' => ['required', 'integer', 'min:0'],
-            'requires_prescription' => ['boolean'],
-            'is_active' => ['boolean'],
-            'description' => ['nullable', 'string', 'max:1000'],
-        ]);
     }
 }

@@ -39,5 +39,5 @@
 @endsection
 
 @push('scripts')
-    <script src="/js/pages/medicines.js"></script>
+    <script src="@asset('js/pages/medicines.js')"></script>
 @endpush

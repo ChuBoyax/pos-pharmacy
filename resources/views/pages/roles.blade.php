@@ -26,5 +26,5 @@
 @endsection
 
 @push('scripts')
-    <script src="/js/pages/roles.js"></script>
+    <script src="@asset('js/pages/roles.js')"></script>
 @endpush

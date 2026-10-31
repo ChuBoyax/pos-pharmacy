@@ -6,7 +6,7 @@
     <title>Sign in · PharmaPOS</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700,800" rel="stylesheet">
-    <link rel="stylesheet" href="/css/pos.css">
+    <link rel="stylesheet" href="@asset('css/pos.css')">
 </head>
 <body>
 <main class="auth">
@@ -62,7 +62,7 @@
         </div>
     </section>
 </main>
-<script src="/js/auth.js"></script>
-<script src="/js/login.js"></script>
+<script src="@asset('js/auth.js')"></script>
+<script src="@asset('js/login.js')"></script>
 </body>
 </html>

@@ -39,5 +39,5 @@
 @endsection
 
 @push('scripts')
-    <script src="/js/pages/stock.js"></script>
+    <script src="@asset('js/pages/stock.js')"></script>
 @endpush

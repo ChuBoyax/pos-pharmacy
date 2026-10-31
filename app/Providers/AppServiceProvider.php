@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,5 +36,8 @@ class AppServiceProvider extends ServiceProvider
         foreach (Role::allPermissions() as $permission) {
             Gate::define($permission, fn (User $user) => $user->hasPermission($permission));
         }
+
+        // Compiled to a runtime call, so the version updates without clearing compiled views.
+        Blade::directive('asset', fn (string $path) => "<?php echo e(\\App\\Support\\Asset::url({$path})); ?>");
     }
 }

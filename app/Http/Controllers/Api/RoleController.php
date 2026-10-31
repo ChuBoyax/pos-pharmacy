@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RoleRequest;
 use App\Models\Role;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class RoleController extends Controller
@@ -21,9 +20,9 @@ class RoleController extends Controller
         ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(RoleRequest $request): JsonResponse
     {
-        $data = $this->validated($request);
+        $data = $request->role();
         $data['name'] = Str::slug($data['label'], '_');
 
         if ($data['name'] === '' || Role::where('name', $data['name'])->exists()) {
@@ -33,11 +32,11 @@ class RoleController extends Controller
         return response()->json(Role::create($data)->loadCount('users'), 201);
     }
 
-    public function update(Request $request, Role $role): JsonResponse
+    public function update(RoleRequest $request, Role $role): JsonResponse
     {
         $this->protect($role);
 
-        $role->update($this->validated($request, $role));
+        $role->update($request->role());
 
         return response()->json($role->loadCount('users'));
     }
@@ -55,30 +54,6 @@ class RoleController extends Controller
         $role->delete();
 
         return response()->json(['message' => 'Role deleted.']);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function validated(Request $request, ?Role $role = null): array
-    {
-        $data = $request->validate([
-            'label' => ['required', 'string', 'max:50', Rule::unique('roles')->ignore($role)],
-            'description' => ['nullable', 'string', 'max:255'],
-            'permissions' => ['present', 'array'],
-            // Reserved permissions (like managing roles) are not in this list, so they can't be granted.
-            'permissions.*' => ['string', 'distinct', Rule::in(Role::grantable())],
-            'menus' => ['required', 'array', 'min:1'],
-            'menus.*' => ['string', 'distinct', Rule::in(array_keys(Role::MENUS))],
-        ], [
-            'menus.required' => 'Show at least one menu, or the role will have nowhere to go.',
-            'menus.min' => 'Show at least one menu, or the role will have nowhere to go.',
-        ]);
-
-        $data['permissions'] = array_values($data['permissions']);
-        $data['menus'] = array_values($data['menus']);
-
-        return $data;
     }
 
     private function protect(Role $role): void

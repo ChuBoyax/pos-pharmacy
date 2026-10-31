@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Role;
+use App\Http\Requests\UserRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
@@ -27,30 +25,14 @@ class UserController extends Controller
         return response()->json($users->paginate(15));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(UserRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users'],
-            'role' => $this->roleRules($request),
-            'is_active' => ['boolean'],
-            'password' => ['required', Password::min(8)],
-        ]);
-
-        return response()->json(User::create($data)->load('assignedRole:name,label'), 201);
+        return response()->json(User::create($request->validated())->load('assignedRole:name,label'), 201);
     }
 
-    public function update(Request $request, User $user): JsonResponse
+    public function update(UserRequest $request, User $user): JsonResponse
     {
-        $this->protect($request, $user);
-
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => $this->roleRules($request),
-            'is_active' => ['boolean'],
-            'password' => ['nullable', Password::min(8)],
-        ]);
+        $data = $request->validated();
 
         // Nobody can lock themselves out, which also guarantees at least one super admin remains.
         if ($user->is($request->user()) && ($data['role'] !== $user->role || ! ($data['is_active'] ?? true))) {
@@ -72,7 +54,7 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user): JsonResponse
     {
-        $this->protect($request, $user);
+        abort_if($user->isSuperAdmin() && ! $request->user()->isSuperAdmin(), 403, 'Only a super admin can change a super admin account.');
 
         if ($user->is($request->user())) {
             throw ValidationException::withMessages(['user' => 'You cannot delete your own account.']);
@@ -88,27 +70,5 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json(['message' => 'User deleted.']);
-    }
-
-    /**
-     * Only a super admin may hand out the super admin role.
-     *
-     * @return array<int, mixed>
-     */
-    private function roleRules(Request $request): array
-    {
-        return [
-            'required',
-            Rule::exists('roles', 'name'),
-            Rule::when(! $request->user()->isSuperAdmin(), Rule::notIn([Role::SUPERADMIN])),
-        ];
-    }
-
-    /**
-     * Super admin accounts can only be touched by another super admin.
-     */
-    private function protect(Request $request, User $user): void
-    {
-        abort_if($user->isSuperAdmin() && ! $request->user()->isSuperAdmin(), 403, 'Only a super admin can change a super admin account.');
     }
 }

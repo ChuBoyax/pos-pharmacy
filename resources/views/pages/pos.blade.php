@@ -112,5 +112,5 @@
 @endsection
 
 @push('scripts')
-    <script src="/js/pages/pos.js"></script>
+    <script src="@asset('js/pages/pos.js')"></script>
 @endpush

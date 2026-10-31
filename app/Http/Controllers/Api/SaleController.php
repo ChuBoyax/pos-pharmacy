@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CheckoutRequest;
 use App\Models\Sale;
 use App\Services\SaleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class SaleController extends Controller
 {
@@ -42,26 +42,9 @@ class SaleController extends Controller
         return response()->json($sale->load('items', 'user:id,name', 'voider:id,name'));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(CheckoutRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.medicine_id' => ['required', 'integer'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'payment_method' => ['required', Rule::in(Sale::PAYMENT_METHODS)],
-            'amount_paid' => ['nullable', 'numeric', 'min:0'],
-            'reference_no' => ['nullable', 'required_unless:payment_method,cash', 'string', 'max:100'],
-            'discount_type' => ['nullable', Rule::in(Sale::DISCOUNT_TYPES)],
-            'discount_id_no' => ['nullable', 'required_if:discount_type,senior,pwd', 'string', 'max:50'],
-            'customer_name' => ['nullable', 'required_if:discount_type,senior,pwd', 'string', 'max:255'],
-            'prescription_ref' => ['nullable', 'string', 'max:100'],
-        ], [
-            'reference_no.required_unless' => 'Enter the GCash / card reference number.',
-            'discount_id_no.required_if' => 'Senior citizen / PWD ID number is required.',
-            'customer_name.required_if' => 'Customer name is required for senior citizen / PWD discounts.',
-        ]);
-
-        return response()->json($this->sales->checkout($request->user(), $data), 201);
+        return response()->json($this->sales->checkout($request->user(), $request->validated()), 201);
     }
 
     public function void(Request $request, Sale $sale): JsonResponse
