@@ -105,7 +105,8 @@ textarea.input{resize:vertical;min-height:80px}
 /* POS fills the screen: the product list and the cart each scroll on their own. */
 .page.fill{height:calc(100vh - 69px);min-height:560px;padding-bottom:24px;overflow:hidden}
 .page.fill .pos{flex:1;min-height:0}
-.pos{display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:18px;align-items:stretch}
+/* Cart grows a little on very wide screens; the product grid takes the rest */
+.pos{display:grid;grid-template-columns:minmax(0,1fr) clamp(380px,24vw,470px);gap:18px;align-items:stretch}
 .pos-left{display:flex;flex-direction:column;min-height:0}
 .products::-webkit-scrollbar,.cart::-webkit-scrollbar,.side::-webkit-scrollbar{display:none}
 .pos-search .in-search{max-width:none}
