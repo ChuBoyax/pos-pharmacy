@@ -207,10 +207,11 @@ App.ready.then(async () => {
             : row(`Includes VAT (${settings.vat_rate}%)`, peso(t.vat)))
             + `<div class="total"><span>Total due</span><span class="num">${peso(t.total)}</span></div>`;
 
-        // Quick-cash buttons: the next round bills above the total ("Exact" lives on the keypad).
-        const bills = [...new Set([20, 50, 100, 500, 1000].map((b) => Math.ceil(t.total / b) * b))].filter((v) => v > t.total).slice(0, 4);
-        $('#quick').innerHTML = bills.map((v) => `<button type="button" data-v="${v}">${peso(v, 0)}</button>`).join('');
-        $('#quick').hidden = !bills.length || !t.total;
+        // Quick-cash buttons: the exact amount, then the next round bills above the total.
+        const bills = [...new Set([20, 50, 100, 500, 1000].map((b) => Math.ceil(t.total / b) * b))].filter((v) => v > t.total).slice(0, 3);
+        $('#quick').innerHTML = `<button type="button" class="exact" data-v="${t.total}">Exact</button>`
+            + bills.map((v) => `<button type="button" data-v="${v}">${peso(v, 0)}</button>`).join('');
+        $('#quick').hidden = !t.total;
 
         const tendered = +$('#tendered').value || 0;
         const change = round2(tendered - t.total);
@@ -229,24 +230,6 @@ App.ready.then(async () => {
         const el = $('#tendered');
         const [whole, ...rest] = el.value.replace(/[^\d.]/g, '').split('.');
         el.value = rest.length ? `${whole}.${rest.join('').slice(0, 2)}` : whole;
-        render();
-    });
-    $('#keypad').addEventListener('click', (e) => {
-        const key = e.target.closest('button')?.dataset.k;
-        if (!key) return;
-        let v = $('#tendered').value;
-
-        if (key === 'back') v = v.slice(0, -1);
-        else if (key === 'clear') v = '';
-        else if (key === 'exact') v = totals().total.toFixed(2);
-        else if (key === '.') v = v.includes('.') ? v : (v || '0') + '.';
-        else {
-            const next = (v === '0' ? '' : v) + key;
-            if (/\.\d{3,}$/.test(next) || next.replace('.', '').length > 9) return;
-            v = next;
-        }
-
-        $('#tendered').value = v;
         render();
     });
     $('#quick').addEventListener('click', (e) => {
