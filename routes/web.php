@@ -16,4 +16,5 @@ Route::view('/stock', 'pages.stock')->name('stock');
 Route::view('/suppliers', 'pages.suppliers')->name('suppliers');
 Route::view('/reports', 'pages.reports')->name('reports');
 Route::view('/users', 'pages.users')->name('users');
+Route::view('/roles', 'pages.roles')->name('roles');
 Route::view('/settings', 'pages.settings')->name('settings');

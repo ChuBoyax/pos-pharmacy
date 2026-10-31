@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
-use App\Models\User;
 use App\Services\SaleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,8 +20,8 @@ class SaleController extends Controller
         $sales = Sale::query()
             ->with('user:id,name')
             ->withSum('items as items_count', 'quantity')
-            // Cashiers only see the sales they rang up themselves.
-            ->when($user->hasRole(User::ROLE_CASHIER), fn ($q) => $q->where('user_id', $user->id))
+            // Without sales.view_all, users only see the sales they rang up themselves.
+            ->when($user->cannot('sales.view_all'), fn ($q) => $q->where('user_id', $user->id))
             ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
                 ->where('invoice_no', 'like', "%{$s}%")
                 ->orWhere('customer_name', 'like', "%{$s}%")))
@@ -38,7 +37,7 @@ class SaleController extends Controller
     public function show(Request $request, Sale $sale): JsonResponse
     {
         $user = $request->user();
-        abort_if($user->hasRole(User::ROLE_CASHIER) && $sale->user_id !== $user->id, 403);
+        abort_if($user->cannot('sales.view_all') && $sale->user_id !== $user->id, 403);
 
         return response()->json($sale->load('items', 'user:id,name', 'voider:id,name'));
     }

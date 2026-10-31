@@ -12,6 +12,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        User::updateOrCreate(['email' => 'superadmin@pospharmacy.test'], [
+            'name' => 'System Owner',
+            'role' => User::ROLE_SUPERADMIN,
+            'password' => 'password',
+        ]);
+
         User::updateOrCreate(['email' => 'admin@pospharmacy.test'], [
             'name' => 'Pharmacy Admin',
             'role' => User::ROLE_ADMIN,

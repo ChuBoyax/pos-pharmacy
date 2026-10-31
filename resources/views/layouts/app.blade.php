@@ -1,23 +1,15 @@
 @php
-    $all = 'admin,pharmacist,cashier';
-    $staff = 'admin,pharmacist';
+    use App\Models\Role;
+
+    // Route => icon. Labels and required permissions come from Role::MENUS.
     $nav = [
-        'Main' => [
-            ['dashboard', 'grid', 'Dashboard', $all],
-            ['pos', 'cart', 'Point of Sale', $all],
-            ['transactions', 'receipt', 'Transactions', $all],
-        ],
-        'Inventory' => [
-            ['medicines', 'pill', 'Medicines', $staff],
-            ['stock', 'box', 'Stock', $staff],
-            ['suppliers', 'truck', 'Suppliers', $staff],
-        ],
-        'Management' => [
-            ['reports', 'chart', 'Reports', $staff],
-            ['users', 'users', 'Users', 'admin'],
-            ['settings', 'cog', 'Settings', $all],
-        ],
+        'Main' => ['dashboard' => 'grid', 'pos' => 'cart', 'transactions' => 'receipt'],
+        'Inventory' => ['medicines' => 'pill', 'stock' => 'box', 'suppliers' => 'truck'],
+        'Management' => ['reports' => 'chart', 'users' => 'users', 'roles' => 'shield', 'settings' => 'cog'],
     ];
+    // Not a role-assignable menu: only the super admin ever sees it.
+    $menus = Role::MENUS + ['roles' => ['Roles & Permissions', 'roles.manage']];
+    $page = Route::currentRouteName();
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -36,7 +28,7 @@
         } catch (e) {}
     </script>
 </head>
-<body data-roles="@yield('roles', $all)">
+<body data-can="@yield('can')" @isset(Role::MENUS[$page]) data-menu="{{ $page }}" @endisset>
 @include('partials.icons')
 
 <div class="splash" id="splash"><i></i></div>
@@ -56,8 +48,9 @@
                 </button>
                 <div class="nav-wrap">
                     <nav class="nav">
-                        @foreach ($links as [$route, $icon, $label, $roles])
-                            <a href="{{ route($route) }}" title="{{ $label }}" data-roles="{{ $roles }}" @class(['on' => request()->routeIs($route)])>
+                        @foreach ($links as $route => $icon)
+                            @php [$label, $can] = $menus[$route]; @endphp
+                            <a href="{{ route($route) }}" title="{{ $label }}" @if ($can) data-can="{{ $can }}" @endif @isset(Role::MENUS[$route]) data-menu="{{ $route }}" @endisset @class(['on' => request()->routeIs($route)])>
                                 <svg class="i"><use href="#i-{{ $icon }}"/></svg><span class="lbl">{{ $label }}</span>
                                 @if ($route === 'stock')
                                     <span class="badge" id="stock-badge" hidden></span>
@@ -87,7 +80,7 @@
                 <button class="icon-btn" id="theme" aria-label="Toggle theme">
                     <svg class="i theme-ic-sun"><use href="#i-sun"/></svg><svg class="i theme-ic-moon"><use href="#i-moon"/></svg>
                 </button>
-                <a class="icon-btn" href="{{ route('stock') }}?status=expiring" data-roles="{{ $staff }}" aria-label="Inventory alerts" title="Inventory alerts">
+                <a class="icon-btn" href="{{ route('stock') }}?status=expiring" data-can="stock.manage" aria-label="Inventory alerts" title="Inventory alerts">
                     <svg class="i"><use href="#i-bell"/></svg><span class="dot" id="alert-dot" hidden></span>
                 </a>
                 <div class="user">

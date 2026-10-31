@@ -21,7 +21,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Profile updated.',
-            'user' => $user->only(['id', 'name', 'email', 'role']),
+            'user' => $user->authPayload(),
         ]);
     }
 

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Transactions')
+@section('can', 'pos.sell,sales.view_all')
 
 @section('content')
     <div class="head">

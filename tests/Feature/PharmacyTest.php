@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Batch;
 use App\Models\Medicine;
+use App\Models\Role;
 use App\Models\Sale;
 use App\Models\Supplier;
 use App\Models\User;
@@ -171,6 +172,71 @@ class PharmacyTest extends TestCase
 
         Sanctum::actingAs($this->user('admin'));
         $this->getJson('/api/users')->assertOk();
+        $this->postJson('/api/roles', ['label' => 'Clerk', 'permissions' => []])->assertForbidden();
+    }
+
+    public function test_super_admin_can_do_everything_including_managing_roles(): void
+    {
+        Sanctum::actingAs($this->user('superadmin'));
+
+        $this->getJson('/api/user')->assertOk()->assertJsonPath('user.role_label', 'Super Admin')
+            ->assertJsonFragment(['roles.manage'])
+            ->assertJsonCount(count(Role::MENUS), 'user.menus');
+        foreach (['/api/reports', '/api/batches', '/api/users', '/api/suppliers/compare', '/api/roles'] as $url) {
+            $this->getJson($url)->assertOk();
+        }
+
+        // The super admin role itself can't be edited or deleted, and reserved permissions can't be granted.
+        $super = Role::where('name', 'superadmin')->first();
+        $this->putJson("/api/roles/{$super->id}", ['label' => 'Boss', 'permissions' => []])->assertStatus(422);
+        $this->deleteJson("/api/roles/{$super->id}")->assertStatus(422);
+        $this->postJson('/api/roles', ['label' => 'Sneaky', 'permissions' => ['roles.manage']])
+            ->assertStatus(422)->assertJsonValidationErrors('permissions.0');
+    }
+
+    public function test_custom_roles_grant_exactly_their_permissions(): void
+    {
+        Sanctum::actingAs($this->user('superadmin'));
+        $this->postJson('/api/roles', ['label' => 'Inventory Clerk', 'permissions' => ['stock.manage'], 'menus' => []])
+            ->assertStatus(422)->assertJsonValidationErrors('menus');
+        $this->postJson('/api/roles', ['label' => 'Inventory Clerk', 'permissions' => ['stock.manage'], 'menus' => ['stock', 'nope']])
+            ->assertStatus(422)->assertJsonValidationErrors('menus.1');
+        $this->postJson('/api/roles', ['label' => 'Inventory Clerk', 'permissions' => ['stock.manage'], 'menus' => ['stock', 'settings']])
+            ->assertCreated()->assertJsonPath('name', 'inventory_clerk');
+
+        $clerk = $this->user('inventory_clerk');
+        Sanctum::actingAs($clerk);
+        $this->getJson('/api/user')->assertJsonPath('user.menus', ['stock', 'settings']);
+        $this->getJson('/api/batches')->assertOk();
+        $this->postJson('/api/medicines', [])->assertForbidden();
+        $this->postJson('/api/sales', [])->assertForbidden();
+
+        // Permission changes take effect immediately, without signing in again.
+        Sanctum::actingAs($this->user('superadmin'));
+        $role = Role::where('name', 'inventory_clerk')->first();
+        $this->putJson("/api/roles/{$role->id}", ['label' => 'Inventory Clerk', 'permissions' => ['reports.view'], 'menus' => ['reports']])->assertOk();
+        $this->deleteJson("/api/roles/{$role->id}")->assertStatus(422); // still has a user
+
+        Sanctum::actingAs($clerk->fresh());
+        $this->getJson('/api/batches')->assertForbidden();
+        $this->getJson('/api/reports')->assertOk();
+    }
+
+    public function test_only_a_super_admin_can_create_or_change_super_admins(): void
+    {
+        $owner = $this->user('superadmin');
+        $admin = $this->user('admin');
+        $payload = ['name' => 'New', 'email' => 'new@x.test', 'password' => 'password1', 'is_active' => true];
+
+        Sanctum::actingAs($admin);
+        $this->postJson('/api/users', [...$payload, 'role' => 'superadmin'])->assertStatus(422)->assertJsonValidationErrors('role');
+        $this->putJson("/api/users/{$owner->id}", ['name' => 'X', 'email' => $owner->email, 'role' => 'cashier'])->assertForbidden();
+        $this->deleteJson("/api/users/{$owner->id}")->assertForbidden();
+        $this->putJson("/api/users/{$admin->id}", ['name' => 'Me', 'email' => $admin->email, 'role' => 'cashier'])->assertStatus(422);
+
+        Sanctum::actingAs($owner);
+        $this->postJson('/api/users', [...$payload, 'role' => 'superadmin'])->assertCreated();
+        $this->putJson("/api/users/{$owner->id}", ['name' => 'Me', 'email' => $owner->email, 'role' => 'admin'])->assertStatus(422);
     }
 
     public function test_cashiers_only_see_their_own_sales(): void
@@ -298,7 +364,7 @@ class PharmacyTest extends TestCase
 
     public function test_pages_render(): void
     {
-        foreach (['/', '/dashboard', '/pos', '/transactions', '/medicines', '/stock', '/suppliers', '/reports', '/users', '/settings'] as $page) {
+        foreach (['/', '/dashboard', '/pos', '/transactions', '/medicines', '/stock', '/suppliers', '/reports', '/users', '/roles', '/settings'] as $page) {
             $this->get($page)->assertOk();
         }
     }

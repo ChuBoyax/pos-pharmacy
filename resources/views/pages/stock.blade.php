@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Stock')
-@section('roles', 'admin,pharmacist')
+@section('can', 'stock.manage')
 
 @section('content')
     <div class="head">
