@@ -50,21 +50,35 @@
         </div>
 
         @foreach ($nav as $group => $links)
-            <div class="nav-group">
-                <div class="nav-label">{{ $group }}</div>
-                <nav class="nav">
-                    @foreach ($links as [$route, $icon, $label, $roles])
-                        <a href="{{ route($route) }}" title="{{ $label }}" data-roles="{{ $roles }}" @class(['on' => request()->routeIs($route)])>
-                            <svg class="i"><use href="#i-{{ $icon }}"/></svg><span class="lbl">{{ $label }}</span>
-                            @if ($route === 'stock')
-                                <span class="badge" id="stock-badge" hidden></span>
-                            @endif
-                        </a>
-                    @endforeach
-                </nav>
+            <div class="nav-group" data-group="{{ Str::slug($group) }}">
+                <button type="button" class="nav-label" aria-expanded="true">
+                    {{ $group }}<svg class="i"><use href="#i-down"/></svg>
+                </button>
+                <div class="nav-wrap">
+                    <nav class="nav">
+                        @foreach ($links as [$route, $icon, $label, $roles])
+                            <a href="{{ route($route) }}" title="{{ $label }}" data-roles="{{ $roles }}" @class(['on' => request()->routeIs($route)])>
+                                <svg class="i"><use href="#i-{{ $icon }}"/></svg><span class="lbl">{{ $label }}</span>
+                                @if ($route === 'stock')
+                                    <span class="badge" id="stock-badge" hidden></span>
+                                @endif
+                            </a>
+                        @endforeach
+                    </nav>
+                </div>
             </div>
         @endforeach
     </aside>
+    <script>
+        // Restore folded nav groups before first paint so they don't flash open.
+        try {
+            JSON.parse(localStorage.getItem('pos_nav_closed') || '[]').forEach((g) => {
+                const el = document.querySelector(`.nav-group[data-group="${g}"]`);
+                el?.classList.add('closed');
+                el?.querySelector('.nav-label').setAttribute('aria-expanded', 'false');
+            });
+        } catch (e) {}
+    </script>
 
     <div class="wrap">
         <header class="bar">
@@ -89,7 +103,7 @@
             </div>
         </header>
 
-        <main class="page">
+        <main class="page @yield('page-class')">
             @yield('content')
         </main>
     </div>

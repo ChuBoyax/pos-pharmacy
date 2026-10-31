@@ -289,6 +289,14 @@ const App = (() => {
             document.dispatchEvent(new CustomEvent('themechange'));
         });
         $('#menu').addEventListener('click', () => $('#side').classList.toggle('open'));
+        document.querySelectorAll('.nav-label').forEach((label) => label.addEventListener('click', () => {
+            const group = label.closest('.nav-group');
+            label.setAttribute('aria-expanded', String(!group.classList.toggle('closed')));
+            const closed = [...document.querySelectorAll('.nav-group.closed')].map((g) => g.dataset.group);
+            try {
+                localStorage.setItem('pos_nav_closed', JSON.stringify(closed));
+            } catch (e) {}
+        }));
         $('#collapse').addEventListener('click', () => {
             const root = document.documentElement;
             const collapsed = root.dataset.side !== 'collapsed';
