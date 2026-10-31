@@ -20,8 +20,8 @@ class BatchController extends Controller
         $batches = Batch::query()
             ->with('medicine:id,name,sku,unit', 'supplier:id,name')
             ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
-                ->where('batch_no', 'like', "%{$s}%")
-                ->orWhereHas('medicine', fn ($q) => $q->where('name', 'like', "%{$s}%")->orWhere('sku', 'like', "%{$s}%"))))
+                ->whereLike('batch_no', "%{$s}%")
+                ->orWhereHas('medicine', fn ($q) => $q->whereLike('name', "%{$s}%")->orWhereLike('sku', "%{$s}%"))))
             ->when($request->medicine_id, fn ($q, $id) => $q->where('medicine_id', $id))
             ->when($request->status === 'expiring', fn ($q) => $q->where('quantity', '>', 0)->whereBetween('expiry_date', [$today, $warnUntil]))
             ->when($request->status === 'expired', fn ($q) => $q->where('quantity', '>', 0)->where('expiry_date', '<=', $today))

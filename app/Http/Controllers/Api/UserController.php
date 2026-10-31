@@ -17,8 +17,8 @@ class UserController extends Controller
             ->with('assignedRole:name,label')
             ->withCount('sales')
             ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
-                ->where('name', 'like', "%{$s}%")
-                ->orWhere('email', 'like', "%{$s}%")))
+                ->whereLike('name', "%{$s}%")
+                ->orWhereLike('email', "%{$s}%")))
             ->when($request->role, fn ($q, $r) => $q->where('role', $r))
             ->orderBy('name');
 
