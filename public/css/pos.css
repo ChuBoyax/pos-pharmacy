@@ -1,6 +1,6 @@
 :root{--bg:#f4f7fc;--ink:#0b1b36;--muted:#5d6f90;--line:#dde5f2;--card:#fff;--brand:#2563eb;--brand-d:#1d4ed8;--accent:#3b82f6;--danger:#dc2626;--warn:#d97706}
 *{box-sizing:border-box;margin:0}
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+body{font-family:'Poppins',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
 a{color:inherit}
 button{font:inherit;cursor:pointer}
 
