@@ -31,13 +31,13 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Login successful.',
             'token' => $user->createToken('pos-pharmacy')->plainTextToken,
-            'user' => $this->userPayload($user),
+            'user' => $user->authPayload(),
         ]);
     }
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['user' => $this->userPayload($request->user())]);
+        return response()->json(['user' => $request->user()->authPayload()]);
     }
 
     public function logout(Request $request): JsonResponse
@@ -45,13 +45,5 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Logged out.']);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function userPayload(User $user): array
-    {
-        return $user->only(['id', 'name', 'email', 'role']);
     }
 }

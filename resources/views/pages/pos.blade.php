@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Point of Sale')
+@section('can', 'pos.sell')
 @section('page-class', 'fill')
 
 @section('content')

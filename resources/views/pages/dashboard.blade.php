@@ -10,7 +10,7 @@
             <p>Here's how your pharmacy is performing today.</p>
         </div>
         <div class="head-r">
-            <a href="{{ route('reports') }}" class="btn hide-sm" data-roles="admin,pharmacist"><svg class="i"><use href="#i-chart"/></svg>View reports</a>
+            <a href="{{ route('reports') }}" class="btn hide-sm" data-can="reports.view"><svg class="i"><use href="#i-chart"/></svg>View reports</a>
             <a href="{{ route('pos') }}" class="btn primary"><svg class="i"><use href="#i-plus"/></svg>New sale</a>
         </div>
     </div>

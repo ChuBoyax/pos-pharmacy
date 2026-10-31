@@ -24,7 +24,7 @@
         <div class="hero-stats">
             <div class="chip"><div><b>Expiry alerts</b>Never sell expired meds</div></div>
             <div class="chip"><div><b>Live inventory</b>Real-time stock levels</div></div>
-            <div class="chip"><div><b>Role access</b>Admin · Pharmacist · Cashier</div></div>
+            <div class="chip"><div><b>Roles &amp; permissions</b>Super Admin · Admin · Pharmacist · Cashier</div></div>
         </div>
     </section>
 

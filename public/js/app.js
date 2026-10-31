@@ -1,5 +1,5 @@
 /**
- * Shared shell for every signed-in page: auth guard, role-based nav, API wrapper,
+ * Shared shell for every signed-in page: auth guard, permission-based nav, API wrapper,
  * and the small UI kit (modals, toasts, form helpers, receipt) the page scripts use.
  */
 const App = (() => {
@@ -319,6 +319,10 @@ const App = (() => {
         });
     }
 
+    // True when the user holds any of the comma-separated permissions (an empty list means everyone).
+    let permissions = [];
+    const can = (list = '') => !list || list.split(',').some((p) => permissions.includes(p.trim()));
+
     const ready = (async () => {
         chrome();
         const res = Auth.token() ? await api('/user') : { ok: false };
@@ -329,22 +333,33 @@ const App = (() => {
         }
 
         const user = res.data.user;
-        if (!document.body.dataset.roles.split(',').includes(user.role)) {
-            location.href = '/dashboard';
+        permissions = user.permissions;
+        const shown = (menu) => !menu || user.menus.includes(menu);
+
+        $('#name').textContent = user.name;
+        $('#role').textContent = user.role_label;
+        $('#avatar').textContent = initials(user.name);
+
+        document.querySelectorAll('[data-can]:not(body)').forEach((el) => !can(el.dataset.can) && el.remove());
+        document.querySelectorAll('[data-menu]:not(body)').forEach((el) => !shown(el.dataset.menu) && el.remove());
+        document.querySelectorAll('.nav-group').forEach((g) => !g.querySelector('a') && g.remove());
+
+        // The API enforces every permission too; this keeps people off pages they can't use or whose
+        // menu their role hides, sending them to the first menu they do have.
+        if (!can(document.body.dataset.can) || !shown(document.body.dataset.menu)) {
+            const home = $('.nav a');
+            if (home) {
+                location.href = home.href;
+                return new Promise(() => {});
+            }
+            $('.page').innerHTML = `<div class="card" style="text-align:center;padding:48px 20px">${icon('lock')}<h3 style="margin-top:10px">No pages assigned</h3><p class="muted">Your role has no menus yet. Please ask the super admin to give it access.</p></div>`;
+            $('#splash').remove();
             return new Promise(() => {});
         }
 
-        document.querySelectorAll('[data-roles]:not(body)').forEach((el) => {
-            if (!el.dataset.roles.split(',').includes(user.role)) el.remove();
-        });
-        document.querySelectorAll('.nav-group').forEach((g) => !g.querySelector('a') && g.remove());
-
-        $('#name').textContent = user.name;
-        $('#role').textContent = user.role;
-        $('#avatar').textContent = initials(user.name);
         $('#splash').remove();
 
-        if (user.role !== 'cashier') {
+        if (can('stock.manage,medicines.manage')) {
             api('/medicines', { query: { stock: 'low', per_page: 1 } }).then((r) => {
                 if (r.ok && r.data.total) {
                     $('#stock-badge').textContent = r.data.total;
@@ -360,6 +375,6 @@ const App = (() => {
     return {
         $, esc, num, peso, date, datetime, icon, thumb, initials, daysUntil, debounce, labels,
         api, toast, field, input, select, read, fill, clearErrors, fail, modal, confirm,
-        emptyRow, loadingRows, pager, fileSize, compressImage, settings, receipt, printReceipt, ready,
+        emptyRow, loadingRows, pager, fileSize, compressImage, settings, receipt, printReceipt, can, ready,
     };
 })();

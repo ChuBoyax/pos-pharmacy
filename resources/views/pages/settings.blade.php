@@ -7,7 +7,7 @@
         <div>
             <div class="eyebrow">Management</div>
             <h1>Settings</h1>
-            <p>Your account and, for admins, how the store and receipts are set up.</p>
+            <p>Your account and, if you have access, how the store and receipts are set up.</p>
         </div>
     </div>
 
@@ -37,7 +37,7 @@
             </form>
         </div>
 
-        <form class="card" id="store" novalidate data-roles="admin">
+        <form class="card" id="store" novalidate data-can="settings.manage">
             <div class="card-h"><div><h3>Store & receipt</h3><p>Printed on every receipt</p></div><svg class="i" style="color:var(--muted)"><use href="#i-store"/></svg></div>
             <div class="form">
                 <label class="f full"><span>Store name</span><input class="input" name="store_name" required><small class="f-err" data-err="store_name"></small></label>

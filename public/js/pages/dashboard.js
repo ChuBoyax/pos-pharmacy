@@ -8,7 +8,7 @@ App.ready.then(async (user) => {
     const res = await App.api('/dashboard');
     if (!res.ok) return;
     const d = res.data;
-    const isStaff = user.role !== 'cashier';
+    const isStaff = App.can('stock.manage,medicines.manage');
 
     /* ---------- KPI cards ---------- */
     const sparkPath = (pts, w = 84, hgt = 30) => {

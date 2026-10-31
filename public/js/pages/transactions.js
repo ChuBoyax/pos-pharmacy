@@ -1,6 +1,6 @@
 App.ready.then(async (user) => {
     const { $, esc, peso, num, icon, labels } = App;
-    const canVoid = user.role !== 'cashier';
+    const canVoid = App.can('sales.void');
     const settings = await App.settings();
     let page = 1;
     let rows = [];

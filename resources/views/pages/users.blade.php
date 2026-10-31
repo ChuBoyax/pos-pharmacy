@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Users')
-@section('roles', 'admin')
+@section('can', 'users.manage')
 
 @section('content')
     <div class="head">
@@ -11,24 +11,18 @@
             <p>Staff accounts and what each one can access.</p>
         </div>
         <div class="head-r">
+            <a class="btn" href="{{ route('roles') }}" data-can="roles.manage"><svg class="i"><use href="#i-shield"/></svg>Roles & permissions</a>
             <button class="btn primary" id="add"><svg class="i"><use href="#i-plus"/></svg>Add user</button>
         </div>
     </div>
 
-    <section class="kpis three">
-        <div class="card mini"><small>Admin</small><b>Full access</b><span>Everything, including users and store settings</span></div>
-        <div class="card mini"><small>Pharmacist</small><b>Inventory & reports</b><span>Sell, manage medicines, stock and suppliers, void sales</span></div>
-        <div class="card mini"><small>Cashier</small><b>Sales only</b><span>Ring up sales and view their own transactions</span></div>
-    </section>
+    <section class="kpis" id="role-cards"></section>
 
     <div class="card">
         <div class="toolbar">
             <label class="in-search"><svg class="i"><use href="#i-search"/></svg><input class="input" id="q" type="search" placeholder="Name or email"></label>
             <select class="input" id="role">
                 <option value="">All roles</option>
-                <option value="admin">Admin</option>
-                <option value="pharmacist">Pharmacist</option>
-                <option value="cashier">Cashier</option>
             </select>
         </div>
         <div class="table-scroll">

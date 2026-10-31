@@ -3,7 +3,7 @@ App.ready.then(async (user) => {
 
     const showUser = (u) => {
         $('#p-name').textContent = u.name;
-        $('#p-role').textContent = u.role;
+        $('#p-role').textContent = u.role_label;
         $('#p-avatar').textContent = App.initials(u.name);
         $('#name').textContent = u.name;
         $('#avatar').textContent = App.initials(u.name);
@@ -40,7 +40,7 @@ App.ready.then(async (user) => {
         App.toast('Password updated.');
     });
 
-    const store = $('#store'); // removed from the page for non-admins
+    const store = $('#store'); // removed from the page without settings.manage
     if (store) {
         App.fill(store, await App.settings());
         handle(store, async (data) => {
