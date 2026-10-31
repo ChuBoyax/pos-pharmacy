@@ -289,14 +289,6 @@ const App = (() => {
             document.dispatchEvent(new CustomEvent('themechange'));
         });
         $('#menu').addEventListener('click', () => $('#side').classList.toggle('open'));
-        document.querySelectorAll('.nav-label').forEach((label) => label.addEventListener('click', () => {
-            const group = label.closest('.nav-group');
-            label.setAttribute('aria-expanded', String(!group.classList.toggle('closed')));
-            const closed = [...document.querySelectorAll('.nav-group.closed')].map((g) => g.dataset.group);
-            try {
-                localStorage.setItem('pos_nav_closed', JSON.stringify(closed));
-            } catch (e) {}
-        }));
         $('#collapse').addEventListener('click', () => {
             const root = document.documentElement;
             const collapsed = root.dataset.side !== 'collapsed';
@@ -342,12 +334,18 @@ const App = (() => {
 
         document.querySelectorAll('[data-can]:not(body)').forEach((el) => !can(el.dataset.can) && el.remove());
         document.querySelectorAll('[data-menu]:not(body)').forEach((el) => !shown(el.dataset.menu) && el.remove());
-        document.querySelectorAll('.nav-group').forEach((g) => !g.querySelector('a') && g.remove());
+
+        // Inventory opens on the first tab this user may see, and disappears if there are none.
+        const inv = $('#nav-inventory');
+        const tab = JSON.parse(inv.dataset.tabs).find(([, perm, menu]) => can(perm) && shown(menu));
+        tab ? (inv.href = tab[0]) : inv.remove();
+        const tabs = $('.inv-tabs');
+        if (tabs && tabs.children.length < 2) tabs.remove(); // a single tab is just noise
 
         // The API enforces every permission too; this keeps people off pages they can't use or whose
-        // menu their role hides, sending them to the first menu they do have.
+        // menu their role hides, sending them to the first page they do have (another tab first).
         if (!can(document.body.dataset.can) || !shown(document.body.dataset.menu)) {
-            const home = $('.nav a');
+            const home = $('.inv-tabs a') ?? $('#nav-inventory.on') ?? $('.nav a');
             if (home) {
                 location.href = home.href;
                 return new Promise(() => {});
@@ -362,8 +360,10 @@ const App = (() => {
         if (can('stock.manage,medicines.manage')) {
             api('/medicines', { query: { stock: 'low', per_page: 1 } }).then((r) => {
                 if (r.ok && r.data.total) {
-                    $('#stock-badge').textContent = r.data.total;
-                    $('#stock-badge').hidden = false;
+                    document.querySelectorAll('.stock-badge').forEach((b) => {
+                        b.textContent = r.data.total;
+                        b.hidden = false;
+                    });
                     $('#alert-dot').hidden = false;
                 }
             });

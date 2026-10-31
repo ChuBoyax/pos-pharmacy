@@ -18,11 +18,11 @@ App.ready.then(async (me) => {
         <b>${num(r.users_count)} <span style="font-size:13px;font-weight:500">${r.users_count === 1 ? 'user' : 'users'}</span></b>
         <span>${r.name === 'superadmin' ? 'Full access to everything' : `${r.permissions.length} of ${grantable} permissions`}</span>
     </div>`).join('');
-    $('#role').insertAdjacentHTML('beforeend', roles.map((r) => `<option value="${esc(r.name)}">${esc(r.label)}</option>`).join(''));
+    $('#role-filter').insertAdjacentHTML('beforeend', roles.map((r) => `<option value="${esc(r.name)}">${esc(r.label)}</option>`).join(''));
 
     async function load() {
         $('#rows').innerHTML = App.loadingRows(6);
-        const res = await App.api('/users', { query: { page, search: $('#q').value.trim(), role: $('#role').value } });
+        const res = await App.api('/users', { query: { page, search: $('#q').value.trim(), role: $('#role-filter').value } });
         if (!res.ok) return;
         rows = res.data.data;
 
@@ -90,7 +90,7 @@ App.ready.then(async (me) => {
         b.dataset.act === 'edit' ? edit(u) : remove(u);
     });
     $('#add').addEventListener('click', () => edit());
-    $('#role').addEventListener('change', () => {
+    $('#role-filter').addEventListener('change', () => {
         page = 1;
         load();
     });
