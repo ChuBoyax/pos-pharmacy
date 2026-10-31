@@ -280,25 +280,7 @@ const App = (() => {
 
     /* ---------- Shell chrome ---------- */
     function chrome() {
-        $('#theme').addEventListener('click', () => {
-            const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-            document.documentElement.dataset.theme = next;
-            try {
-                localStorage.setItem('pos_theme', next);
-            } catch (e) {}
-            document.dispatchEvent(new CustomEvent('themechange'));
-        });
         $('#menu').addEventListener('click', () => $('#side').classList.toggle('open'));
-        $('#collapse').addEventListener('click', () => {
-            const root = document.documentElement;
-            const collapsed = root.dataset.side !== 'collapsed';
-            root.dataset.side = collapsed ? 'collapsed' : '';
-            $('#collapse').title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
-            try {
-                localStorage.setItem('pos_side', root.dataset.side);
-            } catch (e) {}
-        });
-        if (document.documentElement.dataset.side === 'collapsed') $('#collapse').title = 'Expand sidebar';
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.side') && !e.target.closest('#menu')) $('#side').classList.remove('open');
             if (e.target.closest('#user-btn')) $('#menu-dd').classList.toggle('open');
