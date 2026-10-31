@@ -23,8 +23,8 @@ class SaleController extends Controller
             // Without sales.view_all, users only see the sales they rang up themselves.
             ->when($user->cannot('sales.view_all'), fn ($q) => $q->where('user_id', $user->id))
             ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
-                ->where('invoice_no', 'like', "%{$s}%")
-                ->orWhere('customer_name', 'like', "%{$s}%")))
+                ->whereLike('invoice_no', "%{$s}%")
+                ->orWhereLike('customer_name', "%{$s}%")))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->payment_method, fn ($q, $m) => $q->where('payment_method', $m))
             ->when($request->from, fn ($q, $d) => $q->whereDate('created_at', '>=', $d))

@@ -19,9 +19,9 @@ class MedicineController extends Controller
             ->withStock()
             ->with('category:id,name', 'supplier:id,name')
             ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
-                ->where('name', 'like', "%{$s}%")
-                ->orWhere('generic_name', 'like', "%{$s}%")
-                ->orWhere('sku', 'like', "%{$s}%")))
+                ->whereLike('name', "%{$s}%")
+                ->orWhereLike('generic_name', "%{$s}%")
+                ->orWhereLike('sku', "%{$s}%")))
             ->when($request->category_id, fn ($q, $id) => $q->where('category_id', $id))
             ->when($request->stock === 'low', fn ($q) => $q->lowStock())
             ->when($request->stock === 'out', fn ($q) => $q->outOfStock())

@@ -18,9 +18,9 @@ class SupplierController extends Controller
         $suppliers = Supplier::query()
             ->withCount('medicines')
             ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
-                ->where('name', 'like', "%{$s}%")
-                ->orWhere('contact_person', 'like', "%{$s}%")
-                ->orWhere('email', 'like', "%{$s}%")))
+                ->whereLike('name', "%{$s}%")
+                ->orWhereLike('contact_person', "%{$s}%")
+                ->orWhereLike('email', "%{$s}%")))
             ->orderBy('name');
 
         return response()->json($request->boolean('all') ? $suppliers->get(['id', 'name']) : $suppliers->paginate(15));
