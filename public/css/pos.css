@@ -1,0 +1,45 @@
+:root{--bg:#f4f7fc;--ink:#0b1b36;--muted:#5d6f90;--line:#dde5f2;--card:#fff;--brand:#2563eb;--brand-d:#1d4ed8;--accent:#3b82f6;--danger:#dc2626;--warn:#d97706}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+
+/* ---------- Login ---------- */
+.auth{display:grid;grid-template-columns:1.1fr 1fr;min-height:100vh}
+.auth-hero{position:relative;overflow:hidden;color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(1200px 600px at 10% -10%,#3b82f6 0,transparent 60%),radial-gradient(900px 500px at 100% 110%,#0ea5e9 0,transparent 55%),linear-gradient(160deg,#0a1a3a,#153a82)}
+.auth-hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(circle at 30% 40%,#000,transparent 75%)}
+.auth-hero>*{position:relative}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:20px;letter-spacing:.2px}
+.brand-mark{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#60a5fa,#2563eb);box-shadow:0 8px 24px rgba(37,99,235,.45)}
+.brand-mark svg{width:24px;height:24px}
+.hero-copy h1{font-size:clamp(32px,3.6vw,48px);line-height:1.1;font-weight:800;letter-spacing:-1px;max-width:520px}
+.hero-copy h1 span{background:linear-gradient(90deg,#bfdbfe,#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-copy p{margin-top:18px;max-width:460px;color:#b9cdf0;line-height:1.6}
+.hero-stats{display:flex;gap:14px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);font-size:13px;color:#dbe7fb}
+.chip b{display:block;font-size:16px;color:#fff}
+.auth-panel{display:grid;place-items:center;padding:32px;background:var(--card)}
+.auth-box{width:100%;max-width:400px}
+.auth-box h2{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.auth-box .sub{color:var(--muted);margin:8px 0 28px}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:7px}
+.input{position:relative}
+.input svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:#8396b8}
+.input input{width:100%;padding:13px 44px 13px 42px;border:1.5px solid var(--line);border-radius:12px;font:inherit;background:#f8faff;transition:.15s}
+.input input:focus{outline:0;border-color:var(--brand);background:#fff;box-shadow:0 0 0 4px rgba(37,99,235,.15)}
+.input .toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:0;border:0;padding:6px;color:#8396b8;display:grid}
+.input .toggle svg{position:static;transform:none}
+.err{color:var(--danger);font-size:13px;margin-top:6px}
+.alert{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:11px 14px;border-radius:12px;font-size:14px;margin-bottom:18px;display:none}
+.alert.show{display:block}
+.btn{width:100%;padding:14px;border:0;border-radius:12px;color:#fff;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--brand-d));box-shadow:0 10px 24px rgba(37,99,235,.35);transition:.15s;display:flex;justify-content:center;align-items:center;gap:10px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(37,99,235,.4)}
+.btn:disabled{opacity:.7;cursor:wait;transform:none}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:s .7s linear infinite;display:none}
+.loading .spin{display:block}
+@keyframes s{to{transform:rotate(360deg)}}
+.demo{margin-top:22px;padding:12px 14px;border:1px dashed var(--line);border-radius:12px;font-size:12.5px;color:var(--muted)}
+.foot{margin-top:28px;font-size:12px;color:#8396b8;text-align:center}
+
+@media(max-width:960px){.auth{grid-template-columns:1fr}.auth-hero{display:none}}

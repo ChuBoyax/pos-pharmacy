@@ -1,0 +1,117 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Medicine;
+use App\Models\SaleItem;
+use App\Services\ImageOptimizer;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+
+class MedicineController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $medicines = Medicine::query()
+            ->withStock()
+            ->with('category:id,name', 'supplier:id,name')
+            ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
+                ->where('name', 'like', "%{$s}%")
+                ->orWhere('generic_name', 'like', "%{$s}%")
+                ->orWhere('sku', 'like', "%{$s}%")))
+            ->when($request->category_id, fn ($q, $id) => $q->where('category_id', $id))
+            ->when($request->stock === 'low', fn ($q) => $q->lowStock())
+            ->when($request->stock === 'out', fn ($q) => $q->outOfStock())
+            ->when($request->boolean('sellable'), fn ($q) => $q->where('is_active', true)->inStock())
+            ->orderBy('name');
+
+        return response()->json($medicines->paginate(min($request->integer('per_page', 15), 100)));
+    }
+
+    public function show(Medicine $medicine): JsonResponse
+    {
+        return response()->json($medicine->load('category:id,name', 'supplier:id,name'));
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        return response()->json(Medicine::create($this->validated($request)), 201);
+    }
+
+    public function update(Request $request, Medicine $medicine): JsonResponse
+    {
+        $medicine->update($this->validated($request, $medicine));
+
+        return response()->json($medicine);
+    }
+
+    public function uploadImage(Request $request, Medicine $medicine, ImageOptimizer $optimizer): JsonResponse
+    {
+        $request->validate([
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+        ], [
+            'image.max' => 'The image must not be larger than 10 MB.',
+        ]);
+
+        $old = $medicine->image_path;
+        $medicine->update(['image_path' => $optimizer->store($request->file('image'), 'medicines')]);
+
+        if ($old) {
+            Storage::disk('public')->delete($old);
+        }
+
+        return response()->json($medicine);
+    }
+
+    public function deleteImage(Medicine $medicine): JsonResponse
+    {
+        if ($medicine->image_path) {
+            Storage::disk('public')->delete($medicine->image_path);
+            $medicine->update(['image_path' => null]);
+        }
+
+        return response()->json($medicine);
+    }
+
+    public function destroy(Medicine $medicine): JsonResponse
+    {
+        // Medicines that were already sold stay on record so receipts and reports remain accurate.
+        if ($medicine->batches()->exists() || SaleItem::where('medicine_id', $medicine->id)->exists()) {
+            $medicine->update(['is_active' => false]);
+
+            return response()->json(['message' => 'Medicine has stock history, so it was deactivated instead.']);
+        }
+
+        if ($medicine->image_path) {
+            Storage::disk('public')->delete($medicine->image_path);
+        }
+
+        $medicine->delete();
+
+        return response()->json(['message' => 'Medicine deleted.']);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validated(Request $request, ?Medicine $medicine = null): array
+    {
+        return $request->validate([
+            'sku' => ['required', 'string', 'max:50', Rule::unique('medicines')->ignore($medicine?->id)],
+            'name' => ['required', 'string', 'max:255'],
+            'generic_name' => ['nullable', 'string', 'max:255'],
+            'category_id' => ['nullable', 'exists:categories,id'],
+            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'unit' => ['required', 'string', 'max:30'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'cost' => ['nullable', 'numeric', 'min:0'],
+            'reorder_level' => ['required', 'integer', 'min:0'],
+            'requires_prescription' => ['boolean'],
+            'is_active' => ['boolean'],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ]);
+    }
+}
