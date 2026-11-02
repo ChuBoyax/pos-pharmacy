@@ -77,7 +77,8 @@
     </div>
 
     <div class="wrap">
-        <header class="bar">
+        {{-- Pages without a title (POS) have no bar, except on small screens where it holds the menu button. --}}
+        <header @class(['bar', 'bare' => ! View::hasSection('bar-title')])>
             <button class="icon-btn menu-btn" id="menu" aria-label="Open menu"><svg class="i"><use href="#i-menu"/></svg></button>
             @hasSection('bar-title')
                 <div class="bar-title">

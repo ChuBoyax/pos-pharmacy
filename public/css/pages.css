@@ -108,11 +108,11 @@ textarea.input{resize:vertical;min-height:80px}
 
 /* ---------- POS ---------- */
 /* POS fills the screen: the product list and the sale items scroll on their own; payment stays put. */
-.page.fill{height:calc(100vh - 69px);min-height:560px;padding-top:20px;padding-bottom:24px;overflow:hidden}
+.page.fill{height:100vh;height:100dvh;min-height:560px;padding-top:16px;padding-bottom:16px;overflow:hidden}
 .page.fill .pos{flex:1;min-height:0}
 /* Items and payment grow a little on very wide screens; the product grid takes the rest */
 .pos{display:grid;grid-template-columns:minmax(0,1fr) clamp(300px,22vw,380px) clamp(300px,21vw,360px);gap:16px;align-items:stretch}
-.pos-left{display:flex;flex-direction:column;min-height:0}
+.pos-left{display:flex;flex-direction:column;min-height:0;container:pos-left/inline-size}
 /* The form spans the two right-hand columns, so its children are the grid items */
 .pos-sale{display:contents}
 .products::-webkit-scrollbar,.cart-items::-webkit-scrollbar,.more::-webkit-scrollbar,.pay-col::-webkit-scrollbar,.side::-webkit-scrollbar{display:none}
@@ -155,6 +155,23 @@ textarea.input{resize:vertical;min-height:80px}
 .prod .tag.rx{position:absolute;top:16px;right:16px;font-size:9.5px;padding:1px 5px}
 .prod.in-cart{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
 .prod .qty-badge{position:absolute;top:-8px;left:-8px;min-width:24px;height:24px;padding:0 6px;border-radius:99px;background:var(--brand);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;box-shadow:0 4px 10px rgba(37,99,235,.4)}
+/* Cards follow the width of the product column, not the screen: the narrower it gets, the smaller they are, so more fit */
+@container pos-left (max-width:900px){
+  .products{grid-template-columns:repeat(auto-fill,minmax(145px,1fr))}
+}
+@container pos-left (max-width:640px){
+  .products{grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:8px}
+  .prod{padding:6px 6px 8px;border-radius:12px;gap:1px}
+  .prod .prod-img{margin-bottom:6px;padding:4px;border-radius:8px}
+  .prod span.prod-img .i{width:28px;height:28px}
+  .prod b{font-size:12px;line-height:1.25;min-height:2.5em}
+  .prod small{font-size:10.5px}
+  .prod .foot2{flex-direction:column;align-items:flex-start;gap:3px;padding-top:5px}
+  .prod .price{font-size:14px}
+  .prod .stk{padding:1px 7px;font-size:10px}
+  .prod .tag.rx{top:10px;right:10px;font-size:8.5px;padding:0 4px}
+  .prod .qty-badge{top:-6px;left:-6px;min-width:20px;height:20px;padding:0 5px;font-size:11px}
+}
 .cart{display:flex;flex-direction:column;padding:0;min-height:0;overflow:hidden}
 .cart>*{flex-shrink:0}
 .cart-h{min-height:58px;padding:12px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -204,14 +221,21 @@ textarea.input{resize:vertical;min-height:80px}
 .qty button .i{width:14px;height:14px}
 .qty input{width:38px;text-align:center;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;padding:0;-moz-appearance:textfield}
 .qty input::-webkit-inner-spin-button{display:none}
-.more{max-height:65%;padding:12px 16px;border-top:1px solid var(--line);overflow-y:auto;scrollbar-width:none}
-.more .form{grid-template-columns:minmax(0,1fr);gap:10px}
-.more .input,.pay-col .input{padding:9px 11px}
+/* Kept short so the sale items above stay in view: Discount and Customer share a row */
+.more{max-height:65%;padding:10px 16px;border-top:1px solid var(--line);overflow-y:auto;scrollbar-width:none}
+.more .form{gap:8px}
+.more .f{gap:3px}
+.more .f>span{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more .input{padding:6px 9px;border-radius:9px;font-size:12.5px}
+.more select.input{padding-right:26px;background-position:right 7px center;background-size:14px}
+.more .tag{padding:0 5px;font-size:9px;vertical-align:1px}
+#id-field,#rx-field{grid-column:1/-1}
+.pay-col .input{padding:9px 11px}
 .more>summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;list-style:none;font-size:13px;font-weight:600;color:var(--ink-2);padding:2px 0}
 .more>summary::-webkit-details-marker{display:none}
 .more>summary::after{content:"";width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translateY(-2px);transition:transform .15s}
 .more[open]>summary::after{transform:rotate(-135deg)}
-.more[open]>summary{margin-bottom:12px}
+.more[open]>summary{margin-bottom:8px}
 .sum{display:grid;gap:4px;font-size:13px;color:var(--muted)}
 .sum div{display:flex;justify-content:space-between;gap:10px}
 .sum span{color:inherit}
@@ -226,17 +250,42 @@ textarea.input{resize:vertical;min-height:80px}
 .quick{display:flex;gap:6px;flex-wrap:wrap}
 .quick button{flex:1;padding:8px 6px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-size:13px;font-weight:600}
 .quick button:hover{border-color:var(--brand-2)}
-.quick .exact{background:var(--brand-soft);color:var(--brand-ink);border-color:transparent}
 .change{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;padding:12px 16px;border-radius:12px;background:var(--ok-soft);color:var(--ok)}
 .change .num{font-size:20px}
 .change.short{background:var(--bad-soft);color:var(--bad)}
-.cash{display:grid;gap:10px}
+.cash{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px}
+.cash>*{flex-shrink:0}
+.cash .f-err:empty{display:none}
+/* Calculator-style pad: its keys stretch to fill whatever height the column has left */
+.keypad{flex:1 1 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(30px,1fr));gap:6px;max-height:300px;padding:8px;border-radius:14px;background:var(--brand-soft)}
+.keypad button{border-radius:10px;background:var(--surface);color:var(--brand-ink);font-size:16px;font-weight:700;display:grid;place-items:center;box-shadow:0 1px 2px rgba(11,27,54,.08);transition:background .1s,color .1s,transform .06s;user-select:none;-webkit-tap-highlight-color:transparent}
+.keypad button:hover{background:var(--surface-2)}
+.keypad button:active{transform:scale(.96)}
+.keypad .wide{grid-column:span 2}
+.keypad .fn{background:#d6e4fd}
+.keypad .fn:hover{background:#c7d9fb}
+.keypad .fn .i{width:19px;height:19px}
+.keypad .exact{background:#1e3a8a;color:#fff;font-size:13.5px}
+.keypad .exact:hover{background:#1e40af}
 .tender{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);cursor:text;transition:border-color .15s,box-shadow .15s}
 .tender:focus-within{border-color:var(--brand-2);box-shadow:0 0 0 4px var(--brand-soft)}
 .tender span{font-size:13px;font-weight:600;color:var(--ink-2);white-space:nowrap}
 .tender input{width:100%;min-width:0;border:0;outline:0;background:transparent;text-align:right;font:inherit;font-size:24px;font-weight:700;color:var(--ink)}
 .tender input::placeholder{color:var(--line)}
 .lbl-sm{font-size:12px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+/* Shorter laptop screens: tighten the payment column so the pad and Charge fit without scrolling */
+@media(min-width:1181px) and (max-height:820px){
+  .pay-col{gap:10px;padding:12px 14px}
+  .sum .total{margin-top:4px;padding:9px 14px}
+  .sum .total span.num{font-size:24px}
+  .lbl-sm{margin-bottom:6px;font-size:11px}
+  .pay button{flex-direction:row;gap:6px;padding:8px 4px;font-size:13px}
+  .pay button .i{width:18px;height:18px}
+  .tender{padding:6px 14px}
+  .tender input{font-size:20px}
+  .change{padding:8px 14px}
+  .cash{gap:8px}
+}
 
 /* ---------- Receipt ---------- */
 .receipt{font-family:ui-monospace,'SFMono-Regular',Consolas,monospace;font-size:12.5px;line-height:1.55;max-width:330px;margin:0 auto;color:var(--ink)}
@@ -316,13 +365,11 @@ textarea.input{resize:vertical;min-height:80px}
   .pos{grid-template-columns:minmax(0,1fr)}
   .cart-items{flex:none}
   .more{max-height:none}
+  .keypad{flex:none;max-height:none;grid-template-rows:repeat(4,48px)}
   .kpis.six{grid-template-columns:repeat(2,minmax(0,1fr))}
   .settings,.split{grid-template-columns:minmax(0,1fr)}
 }
 @media(max-width:560px){
-  .products{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
-  .prod{padding:8px 8px 10px}
-  .prod .foot2{flex-direction:column;align-items:flex-start;gap:2px}
   .form,.dl{grid-template-columns:minmax(0,1fr)}
   .kpis.six,.kpis.three{grid-template-columns:minmax(0,1fr)}
   .toolbar .input,.in-search{width:100%;max-width:none}
