@@ -159,6 +159,13 @@ App.ready.then(async () => {
     $('#cart').addEventListener('change', (e) => {
         if (e.target.matches('.qty input')) setQty(+e.target.closest('.ci').dataset.id, +e.target.value);
     });
+    // The cart sits inside the checkout form: Enter in a quantity box must not charge the sale.
+    $('#cart').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.matches('.qty input')) {
+            e.preventDefault();
+            e.target.blur();
+        }
+    });
     $('#clear').addEventListener('click', () => {
         cart.clear();
         render();
@@ -179,11 +186,13 @@ App.ready.then(async () => {
     function render() {
         const lines = [...cart.values()];
         const units = lines.reduce((a, l) => a + l.qty, 0);
-        $('#cart-count').textContent = units ? `· ${units} item${units > 1 ? 's' : ''}` : '';
+        $('#cart-count').textContent = units ? `${units} item${units > 1 ? 's' : ''}` : '';
+        $('#clear').hidden = !lines.length;
 
         $('#cart').innerHTML = lines.length
             ? lines.map(({ medicine: m, qty }) => `<div class="ci" data-id="${m.id}">
-                <div class="grow"><b>${esc(m.name)} ${m.requires_prescription ? '<span class="tag rx">RX</span>' : ''}</b><small>${peso(m.price)} / ${esc(m.unit)}</small></div>
+                ${App.thumb(m)}
+                <div class="grow"><b title="${esc(m.name)}">${esc(m.name)}</b><small>${peso(m.price)} / ${esc(m.unit)}${m.requires_prescription ? ' <span class="tag rx">RX</span>' : ''}</small></div>
                 <div class="qty">
                     <button type="button" data-act="dec" aria-label="Decrease">${icon('minus')}</button>
                     <input type="number" min="0" value="${qty}" aria-label="Quantity">

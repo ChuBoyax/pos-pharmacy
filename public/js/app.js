@@ -310,9 +310,10 @@ const App = (() => {
         permissions = user.permissions;
         const shown = (menu) => !menu || user.menus.includes(menu);
 
-        $('#name').textContent = user.name;
-        $('#role').textContent = user.role_label;
         $('#avatar').textContent = initials(user.name);
+        $('#dd-name').textContent = user.name;
+        $('#dd-role').textContent = user.role_label;
+        $('#user-btn').title = `${user.name} · ${user.role_label}`;
 
         document.querySelectorAll('[data-can]:not(body)').forEach((el) => !can(el.dataset.can) && el.remove());
         document.querySelectorAll('[data-menu]:not(body)').forEach((el) => !shown(el.dataset.menu) && el.remove());
@@ -346,7 +347,9 @@ const App = (() => {
                         b.textContent = r.data.total;
                         b.hidden = false;
                     });
-                    $('#alert-dot').hidden = false;
+                    // The alerts link is removed for roles without stock access.
+                    const dot = $('#alert-dot');
+                    if (dot) dot.hidden = false;
                 }
             });
         }
