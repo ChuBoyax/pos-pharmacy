@@ -2,15 +2,10 @@
 
 @section('title', 'Settings')
 
-@section('content')
-    <div class="head">
-        <div>
-            <div class="eyebrow">Management</div>
-            <h1>Settings</h1>
-            <p>Your account and, if you have access, how the store and receipts are set up.</p>
-        </div>
-    </div>
+@section('bar-title', 'Settings')
+@section('bar-subtitle', 'Your account and, if you have access, how the store and receipts are set up.')
 
+@section('content')
     <div class="settings">
         <div style="display:grid;gap:16px">
             <form class="card" id="profile" novalidate>

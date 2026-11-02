@@ -3,19 +3,14 @@
 @section('title', 'Stock')
 @section('can', 'stock.manage')
 
+@section('bar-title', 'Stock & batches')
+@section('bar-subtitle', 'Receive deliveries, track expiry dates and correct counts. Sales always use the earliest-expiring batch first.')
+@section('inv-actions')
+    <button class="btn primary" id="receive"><svg class="i"><use href="#i-plus"/></svg>Receive stock</button>
+@endsection
+
 @section('content')
     @include('partials.inventory-tabs')
-
-    <div class="head">
-        <div>
-            <div class="eyebrow">Inventory</div>
-            <h1>Stock & batches</h1>
-            <p>Receive deliveries, track expiry dates and correct counts. Sales always use the earliest-expiring batch first.</p>
-        </div>
-        <div class="head-r">
-            <button class="btn primary" id="receive"><svg class="i"><use href="#i-plus"/></svg>Receive stock</button>
-        </div>
-    </div>
 
     <div class="card">
         <div class="tabs" id="tabs">

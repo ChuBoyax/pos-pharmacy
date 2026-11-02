@@ -3,18 +3,13 @@
 @section('title', 'Roles & Permissions')
 @section('can', 'roles.manage')
 
-@section('content')
-    <div class="head">
-        <div>
-            <div class="eyebrow">Management · Super admin</div>
-            <h1>Roles & permissions</h1>
-            <p>Decide what each role can see and do. Changes apply on the user's next page load.</p>
-        </div>
-        <div class="head-r">
-            <button class="btn primary" id="add"><svg class="i"><use href="#i-plus"/></svg>New role</button>
-        </div>
-    </div>
+@section('bar-title', 'Roles & permissions')
+@section('bar-subtitle', "Decide what each role can see and do. Changes apply on the user's next page load.")
+@section('bar-actions')
+    <button class="btn primary" id="add"><svg class="i"><use href="#i-plus"/></svg>New role</button>
+@endsection
 
+@section('content')
     <section class="roles" id="roles"></section>
 
     <div class="card">

@@ -3,20 +3,15 @@
 @section('title', 'Medicines')
 @section('can', 'medicines.manage')
 
+@section('bar-title', 'Medicines')
+@section('bar-subtitle', 'Your product catalogue, prices and reorder levels.')
+@section('inv-actions')
+    <button class="btn" id="manage-cats"><svg class="i"><use href="#i-tag"/></svg>Categories</button>
+    <button class="btn primary" id="add"><svg class="i"><use href="#i-plus"/></svg>Add medicine</button>
+@endsection
+
 @section('content')
     @include('partials.inventory-tabs')
-
-    <div class="head">
-        <div>
-            <div class="eyebrow">Inventory</div>
-            <h1>Medicines</h1>
-            <p>Your product catalogue, prices and reorder levels.</p>
-        </div>
-        <div class="head-r">
-            <button class="btn" id="manage-cats"><svg class="i"><use href="#i-tag"/></svg>Categories</button>
-            <button class="btn primary" id="add"><svg class="i"><use href="#i-plus"/></svg>Add medicine</button>
-        </div>
-    </div>
 
     <div class="card">
         <div class="toolbar">

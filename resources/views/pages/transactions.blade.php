@@ -3,18 +3,13 @@
 @section('title', 'Transactions')
 @section('can', 'pos.sell,sales.view_all')
 
-@section('content')
-    <div class="head">
-        <div>
-            <div class="eyebrow">Sales</div>
-            <h1>Transactions</h1>
-            <p>Browse, reprint and void past sales.</p>
-        </div>
-        <div class="head-r">
-            <a href="{{ route('pos') }}" class="btn primary"><svg class="i"><use href="#i-plus"/></svg>New sale</a>
-        </div>
-    </div>
+@section('bar-title', 'Transactions')
+@section('bar-subtitle', 'Browse, reprint and void past sales.')
+@section('bar-actions')
+    <a href="{{ route('pos') }}" class="btn primary"><svg class="i"><use href="#i-plus"/></svg>New sale</a>
+@endsection
 
+@section('content')
     <div class="card">
         <div class="toolbar">
             <label class="in-search"><svg class="i"><use href="#i-search"/></svg><input class="input" id="q" type="search" placeholder="Invoice no. or customer"></label>

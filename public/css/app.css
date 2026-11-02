@@ -46,6 +46,12 @@ a{color:inherit;text-decoration:none}
 .search input:focus{outline:0;border-color:var(--brand-2);box-shadow:0 0 0 4px var(--brand-soft)}
 .search kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);font:600 11px/1 'Poppins';padding:4px 6px;border-radius:6px;border:1px solid var(--line);color:var(--muted);background:var(--surface-2)}
 .bar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+/* Page title and actions in the top bar; sized to fit without making the bar taller */
+.bar-title{flex:1 1 0;min-width:0}
+.bar-title h1{font-size:18px;font-weight:700;letter-spacing:-.4px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-title p{font-size:12.5px;line-height:1.3;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-actions{flex:none;display:flex;align-items:center;gap:8px}
+.bar-actions .btn{white-space:nowrap}
 .icon-btn{position:relative;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);transition:.15s}
 .icon-btn:hover{border-color:var(--brand-2);color:var(--brand-ink)}
 .icon-btn .dot{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--bad);border:2px solid var(--surface)}
@@ -63,12 +69,8 @@ a{color:inherit;text-decoration:none}
 .dropdown .danger{color:var(--bad)}
 
 /* ---------- Page ---------- */
-.page{padding:32px 36px 56px;display:flex;flex-direction:column;gap:24px;width:100%}
-.head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
-.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
-.head h1{font-size:26px;font-weight:700;letter-spacing:-.6px;margin-top:6px}
-.head p{color:var(--muted);margin-top:4px}
-.head-r{display:flex;gap:10px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:10px;font-weight:600;border:1px solid var(--line);background:var(--surface);transition:.15s}
+.page{padding:24px 36px 56px;display:flex;flex-direction:column;gap:24px;width:100%}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:10px;font-weight:600;border:1px solid var(--line);background:var(--surface);transition:.15s}
 .btn:hover{border-color:var(--brand-2)}
 .btn.primary{color:#fff;border:0;background:var(--brand);box-shadow:0 1px 2px rgba(37,99,235,.35)}
 .btn.primary:hover{background:var(--brand-ink)}
@@ -161,6 +163,9 @@ a{color:inherit;text-decoration:none}
   .side.open{transform:none;box-shadow:0 0 0 100vmax rgba(11,27,54,.35)}
   .icon-btn.menu-btn{display:grid}
   .bar,.page{padding-left:16px;padding-right:16px}
+  /* No room beside the title: actions drop to their own row in the bar */
+  .bar{flex-wrap:wrap}
+  .bar-actions{order:3;width:100%;justify-content:flex-end}
   .user-btn span{display:none}.user-btn{padding:4px}
 }
-@media(max-width:560px){.kpis{grid-template-columns:minmax(0,1fr)}.head h1{font-size:23px}.search kbd{display:none}.hide-sm{display:none}}
+@media(max-width:560px){.kpis{grid-template-columns:minmax(0,1fr)}.search kbd{display:none}.hide-sm{display:none}}

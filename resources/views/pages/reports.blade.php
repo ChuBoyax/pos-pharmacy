@@ -3,18 +3,15 @@
 @section('title', 'Reports')
 @section('can', 'reports.view')
 
-@section('content')
-    <div class="head">
-        <div>
-            <div class="eyebrow">Management</div>
-            <h1>Sales reports</h1>
-            <p id="range-label">Performance for the selected period.</p>
-        </div>
-        <div class="head-r">
-            <button class="btn" id="export"><svg class="i"><use href="#i-download"/></svg>Export CSV</button>
-        </div>
-    </div>
+@section('bar-title', 'Sales reports')
+@section('bar-subtitle')
+    <span id="range-label">Performance for the selected period.</span>
+@endsection
+@section('bar-actions')
+    <button class="btn" id="export"><svg class="i"><use href="#i-download"/></svg>Export CSV</button>
+@endsection
 
+@section('content')
     <div class="card">
         <div class="toolbar" style="margin:0">
             <div class="seg presets" id="presets">
