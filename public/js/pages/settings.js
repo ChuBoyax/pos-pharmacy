@@ -5,7 +5,8 @@ App.ready.then(async (user) => {
         $('#p-name').textContent = u.name;
         $('#p-role').textContent = u.role_label;
         $('#p-avatar').textContent = App.initials(u.name);
-        $('#name').textContent = u.name;
+        $('#dd-name').textContent = u.name;
+        $('#user-btn').title = `${u.name} · ${u.role_label}`;
         $('#avatar').textContent = App.initials(u.name);
     };
     showUser(user);

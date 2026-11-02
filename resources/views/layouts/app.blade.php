@@ -56,7 +56,25 @@
                 </a>
             @endforeach
         </nav>
+
+        <div class="side-foot">
+            <a class="side-link" href="{{ route('stock') }}?status=expiring" data-can="stock.manage" aria-label="Inventory alerts" title="Inventory alerts">
+                <span class="side-ic"><svg class="i"><use href="#i-bell"/></svg><span class="dot" id="alert-dot" hidden></span></span>
+                <span class="lbl">Alerts</span>
+            </a>
+            <button class="user-btn" id="user-btn" aria-haspopup="true" aria-label="Account menu">
+                <span class="avatar" id="avatar">?</span>
+            </button>
+        </div>
     </aside>
+
+    {{-- Outside the sidebar, whose scrolling would clip it. --}}
+    <div class="dropdown" id="menu-dd">
+        <div class="dd-h"><b id="dd-name"></b><small id="dd-role"></small></div>
+        {{-- Opens the Settings page, so it goes wherever the role hides that menu. --}}
+        <button onclick="location.href='{{ route('settings') }}'" data-menu="settings"><svg class="i"><use href="#i-user"/></svg>My account</button>
+        <button class="danger" id="logout"><svg class="i"><use href="#i-logout"/></svg>Log out</button>
+    </div>
 
     <div class="wrap">
         <header class="bar">
@@ -70,22 +88,6 @@
             @hasSection('bar-actions')
                 <div class="bar-actions">@yield('bar-actions')</div>
             @endif
-            <div class="bar-r">
-                <a class="icon-btn" href="{{ route('stock') }}?status=expiring" data-can="stock.manage" aria-label="Inventory alerts" title="Inventory alerts">
-                    <svg class="i"><use href="#i-bell"/></svg><span class="dot" id="alert-dot" hidden></span>
-                </a>
-                <div class="user">
-                    <button class="user-btn" id="user-btn" aria-haspopup="true">
-                        <div class="avatar" id="avatar">?</div>
-                        <span><b id="name">—</b><small id="role"></small></span>
-                    </button>
-                    <div class="dropdown" id="menu-dd">
-                        {{-- Opens the Settings page, so it goes wherever the role hides that menu. --}}
-                        <button onclick="location.href='{{ route('settings') }}'" data-menu="settings"><svg class="i"><use href="#i-user"/></svg>My account</button>
-                        <button class="danger" id="logout"><svg class="i"><use href="#i-logout"/></svg>Log out</button>
-                    </div>
-                </div>
-            </div>
         </header>
 
         <main class="page @yield('page-class')">

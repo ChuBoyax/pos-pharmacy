@@ -8,6 +8,7 @@
 @section('bar-subtitle', 'Search or scan a product, then charge the customer.')
 
 @section('content')
+    {{-- Three columns: products, the items being sold, and payment. --}}
     <div class="pos">
         <section class="pos-left">
             <div class="pos-search">
@@ -25,43 +26,46 @@
             <div class="products" id="products"></div>
         </section>
 
-        <aside class="card cart">
-            <div class="cart-h">
-                <h3>Current sale <span class="muted" id="cart-count"></span></h3>
-                <button class="btn sm" id="clear" type="button">Clear</button>
-            </div>
-            <div class="cart-items" id="cart"></div>
+        {{-- One form across both columns; it takes no space of its own (display: contents). --}}
+        <form class="pos-sale" id="checkout" novalidate>
+            <aside class="card cart">
+                <div class="cart-h">
+                    <h3>Current sale <span class="cart-count" id="cart-count"></span></h3>
+                    <button class="cart-clear" id="clear" type="button" hidden><svg class="i"><use href="#i-trash"/></svg>Clear</button>
+                </div>
+                <div class="cart-items" id="cart"></div>
 
-            <form class="cart-f" id="checkout" novalidate>
                 <details class="more" id="more">
                     <summary>Discount, customer &amp; prescription</summary>
                     <div class="form">
-                    <label class="f">
-                        <span>Discount</span>
-                        <select class="input" name="discount_type" id="discount">
-                            <option value="none">None</option>
-                            <option value="senior">Senior citizen</option>
-                            <option value="pwd">PWD</option>
-                        </select>
-                    </label>
-                    <label class="f">
-                        <span id="customer-label">Customer (optional)</span>
-                        <input class="input" name="customer_name" placeholder="Walk-in customer">
-                        <small class="f-err" data-err="customer_name"></small>
-                    </label>
-                    <label class="f full" id="id-field" hidden>
-                        <span>Senior / PWD ID number</span>
-                        <input class="input" name="discount_id_no" placeholder="e.g. SC-0012345">
-                        <small class="f-err" data-err="discount_id_no"></small>
-                    </label>
-                    <label class="f full" id="rx-field" hidden>
-                        <span>Prescription reference <span class="tag rx">RX</span></span>
-                        <input class="input" name="prescription_ref" placeholder="Doctor / prescription no.">
-                        <small class="f-err" data-err="prescription_ref"></small>
-                    </label>
+                        <label class="f">
+                            <span>Discount</span>
+                            <select class="input" name="discount_type" id="discount">
+                                <option value="none">None</option>
+                                <option value="senior">Senior citizen</option>
+                                <option value="pwd">PWD</option>
+                            </select>
+                        </label>
+                        <label class="f">
+                            <span id="customer-label">Customer (optional)</span>
+                            <input class="input" name="customer_name" placeholder="Walk-in customer">
+                            <small class="f-err" data-err="customer_name"></small>
+                        </label>
+                        <label class="f" id="id-field" hidden>
+                            <span>Senior / PWD ID number</span>
+                            <input class="input" name="discount_id_no" placeholder="e.g. SC-0012345">
+                            <small class="f-err" data-err="discount_id_no"></small>
+                        </label>
+                        <label class="f" id="rx-field" hidden>
+                            <span>Prescription reference <span class="tag rx">RX</span></span>
+                            <input class="input" name="prescription_ref" placeholder="Doctor / prescription no.">
+                            <small class="f-err" data-err="prescription_ref"></small>
+                        </label>
                     </div>
                 </details>
+            </aside>
 
+            <aside class="card pay-col">
                 <div class="sum" id="sum"></div>
 
                 <div>
@@ -91,8 +95,8 @@
                 </label>
 
                 <button class="btn primary block" id="charge" type="submit" disabled>Charge ₱0.00</button>
-            </form>
-        </aside>
+            </aside>
+        </form>
     </div>
 @endsection
 
