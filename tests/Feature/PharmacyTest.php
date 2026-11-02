@@ -475,6 +475,32 @@ class PharmacyTest extends TestCase
         $this->getJson('/api/reports')->assertOk()->assertJsonPath('summary.transactions', 1)->assertJsonPath('summary.items_sold', 2);
     }
 
+    public function test_reports_show_monthly_sales_and_inventory_value(): void
+    {
+        Sanctum::actingAs($this->user('admin'));
+        $medicine = $this->medicine(['price' => 10]);
+        $make = fn (int $quantity, string $expiry) => Batch::create([
+            'medicine_id' => $medicine->id, 'batch_no' => 'B'.fake()->unique()->numberBetween(100, 999),
+            'quantity_received' => $quantity, 'quantity' => $quantity, 'cost' => 4.5,
+            'expiry_date' => $expiry, 'received_at' => today()->subMonth(),
+        ]);
+        $make(100, today()->addYear()->toDateString());
+        $make(10, today()->subDay()->toDateString());
+        $make(0, today()->addYear()->toDateString());
+
+        $this->postJson('/api/sales', ['items' => [['medicine_id' => $medicine->id, 'quantity' => 20]], 'payment_method' => 'cash', 'amount_paid' => 200])->assertCreated();
+
+        $this->getJson('/api/reports')->assertOk()
+            ->assertJsonPath('monthly.0.month', today()->format('Y-m'))
+            ->assertJsonPath('monthly.0.transactions', 1)
+            ->assertJsonPath('monthly.0.total', 200)
+            ->assertJsonPath('inventory.sellable.units', 80)
+            ->assertJsonPath('inventory.sellable.at_cost', 360)
+            ->assertJsonPath('inventory.sellable.at_srp', 800)
+            ->assertJsonPath('inventory.expired.units', 10)
+            ->assertJsonPath('inventory.expired.at_cost', 45);
+    }
+
     public function test_pages_render(): void
     {
         foreach (['/', '/dashboard', '/pos', '/transactions', '/medicines', '/stock', '/suppliers', '/reports', '/users', '/roles', '/settings'] as $page) {
