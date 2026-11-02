@@ -13,13 +13,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'sku', 'name', 'generic_name', 'category_id', 'supplier_id', 'unit', 'price', 'cost',
+    'sku', 'name', 'generic_name', 'category_id', 'product_type', 'supplier_id', 'unit', 'price', 'cost',
     'reorder_level', 'requires_prescription', 'is_active', 'description', 'image_path',
 ])]
 #[Hidden(['image_path'])]
 #[Appends(['image_url'])]
 class Medicine extends Model
 {
+    public const PRODUCT_TYPES = [
+        'oral' => 'Oral',
+        'injectable' => 'Injectable',
+        'topical' => 'Topical',
+        'inhalation' => 'Inhalation',
+        'supply' => 'Medical supply',
+        'other' => 'Other',
+    ];
+
     /**
      * A Vercel Blob URL in production, or a relative /storage URL for locally stored files.
      */

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReceiveStockRequest;
 use App\Models\Batch;
+use App\Models\Medicine;
 use App\Models\Setting;
+use App\Services\PurchaseCosting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,12 +41,28 @@ class BatchController extends Controller
     {
         $data = $request->validated();
 
-        $batch = Batch::create([
-            ...$data,
-            'quantity_received' => $data['quantity'],
-            'cost' => $data['cost'] ?? 0,
-            'received_at' => $data['received_at'] ?? today(),
-        ]);
+        $costing = PurchaseCosting::compute(
+            (int) $data['packs_bought'],
+            (int) $data['pack_size'],
+            (float) ($data['list_price'] ?? 0),
+            (float) ($data['discount_percent'] ?? 0),
+            isset($data['deal_buy']) ? (int) $data['deal_buy'] : null,
+            isset($data['deal_free']) ? (int) $data['deal_free'] : null,
+            isset($data['total_cost']) ? (float) $data['total_cost'] : null,
+        );
+
+        $batch = DB::transaction(function () use ($data, $costing) {
+            // The medicine's cost follows the latest delivery; its selling price is never touched.
+            Medicine::whereKey($data['medicine_id'])->update(['cost' => round($costing['cost'], 2)]);
+
+            return Batch::create([
+                ...$data,
+                ...$costing,
+                'discount_percent' => $data['discount_percent'] ?? 0,
+                'quantity_received' => $costing['quantity'],
+                'received_at' => $data['received_at'] ?? today(),
+            ]);
+        });
 
         return response()->json($batch->load('medicine:id,name'), 201);
     }

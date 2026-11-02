@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Medicine;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,6 +26,7 @@ class MedicineRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'generic_name' => ['nullable', 'string', 'max:255'],
             'category_id' => ['nullable', 'exists:categories,id'],
+            'product_type' => ['nullable', Rule::in(array_keys(Medicine::PRODUCT_TYPES))],
             'supplier_id' => ['nullable', 'exists:suppliers,id'],
             'unit' => ['required', 'string', 'max:30'],
             'price' => ['required', 'numeric', 'min:0'],

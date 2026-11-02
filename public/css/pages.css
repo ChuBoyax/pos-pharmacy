@@ -45,6 +45,24 @@ textarea.input{resize:vertical;min-height:80px}
 .act .i{width:16px;height:16px}
 
 /* ---------- Toolbar, tables, paging ---------- */
+/* Receive stock: purchase details and the computed cost */
+.form-sec{padding-top:10px;border-top:1px solid var(--line);font-size:12px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink-2)}
+.deal{display:flex;align-items:center;gap:8px}
+.deal .input{min-width:0}
+.deal b{color:var(--muted)}
+.cost-box{grid-column:1/-1;display:grid;gap:6px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);font-size:13px}
+.cost-box div{display:flex;justify-content:space-between;gap:12px}
+.cost-box span{color:var(--muted)}
+.cost-box b{font-weight:600;text-align:right}
+.cost-box .key{margin:2px -6px;padding:7px 6px;border-radius:8px;background:var(--brand-soft)}
+.cost-box .key span,.cost-box .key b{color:var(--brand-ink);font-weight:700}
+.cost-box .loss b,.cost-box .loss span{color:var(--bad)}
+/* Sortable table headers */
+.th-sort{display:inline-flex;align-items:center;gap:4px;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;transition:color .12s}
+.th-sort:hover,[aria-sort] .th-sort{color:var(--brand-ink)}
+.th-sort::after{content:"↕";font-size:12px;line-height:1;opacity:.45}
+[aria-sort=ascending] .th-sort::after{content:"↑";opacity:1}
+[aria-sort=descending] .th-sort::after{content:"↓";opacity:1}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
 .toolbar .input{width:auto}
 .toolbar .spacer{flex:1}

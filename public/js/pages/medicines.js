@@ -5,6 +5,11 @@ App.ready.then(async () => {
     let rows = [];
     let categories = [];
     let suppliers = [];
+    let sort = 'name';
+    let dir = 'asc';
+    // The filter is rendered from Medicine::PRODUCT_TYPES, so the list lives in one place.
+    const productTypes = [...$('#type').options].filter((o) => o.value).map((o) => [o.value, o.textContent]);
+    const typeLabel = (value) => productTypes.find(([v]) => v === value)?.[1] ?? '—';
 
     const params = new URLSearchParams(location.search);
     if (params.get('stock')) $('#stock').value = params.get('stock');
@@ -19,8 +24,8 @@ App.ready.then(async () => {
     }
 
     async function load() {
-        $('#rows').innerHTML = App.loadingRows(7);
-        const res = await App.api('/medicines', { query: { page, search: $('#q').value.trim(), category_id: $('#cat').value, stock: $('#stock').value } });
+        $('#rows').innerHTML = App.loadingRows(8);
+        const res = await App.api('/medicines', { query: { page, sort, dir, search: $('#q').value.trim(), category_id: $('#cat').value, product_type: $('#type').value, stock: $('#stock').value } });
         if (!res.ok) return;
         rows = res.data.data;
 
@@ -30,7 +35,8 @@ App.ready.then(async () => {
                 return `<tr data-id="${m.id}">
                     <td class="wrap"><div class="cell">${App.thumb(m)}<div><b>${esc(m.name)} ${m.requires_prescription ? '<span class="tag rx">RX</span>' : ''}</b><small>${esc(m.generic_name ?? '')} · ${esc(m.sku)}</small></div></div></td>
                     <td>${esc(m.category?.name ?? '—')}</td>
-                    <td class="r num"><b>${peso(m.price)}</b><br><small class="muted">per ${esc(m.unit)}</small></td>
+                    <td>${esc(typeLabel(m.product_type))}</td>
+                    <td class="r num"><b>${peso(m.price)}</b><br><small class="muted">per ${esc(m.unit)} · cost ${peso(m.cost)}</small></td>
                     <td class="r num"><span class="pill ${tone}">${num(m.stock)}</span><br><small class="muted">reorder at ${num(m.reorder_level)}</small></td>
                     <td>${esc(m.supplier?.name ?? '—')}</td>
                     <td>${m.is_active ? '<span class="pill ok">Active</span>' : '<span class="pill mute">Inactive</span>'}</td>
@@ -42,7 +48,7 @@ App.ready.then(async () => {
                     </div></td>
                 </tr>`;
             }).join('')
-            : App.emptyRow(7, 'No medicines found.', 'pill');
+            : App.emptyRow(8, 'No medicines found.', 'pill');
 
         App.pager($('#pager'), res.data, (p) => {
             page = p;
@@ -75,9 +81,10 @@ App.ready.then(async () => {
                 ${field('SKU / barcode', 'sku', input('sku', 'required placeholder="Scan or type"'))}
                 ${field('Unit', 'unit', select('unit', units.map((u) => [u, u[0].toUpperCase() + u.slice(1)])))}
                 ${field('Category', 'category_id', select('category_id', opts(categories)))}
+                ${field('Product type', 'product_type', select('product_type', [['', '— None —'], ...productTypes]))}
                 ${field('Default supplier', 'supplier_id', select('supplier_id', opts(suppliers)))}
                 ${field('Selling price (VAT incl.)', 'price', input('price', 'type="number" min="0" step="0.01" required'))}
-                ${field('Unit cost', 'cost', input('cost', 'type="number" min="0" step="0.01"'))}
+                ${field('Unit cost', 'cost', input('cost', 'type="number" min="0" step="0.01"'), { hint: 'Updated automatically each time stock is received.' })}
                 ${field('Reorder level', 'reorder_level', input('reorder_level', 'type="number" min="0" required'), { hint: 'Flag as low stock at or below this quantity.' })}
                 <div class="f" style="justify-content:center;gap:12px">
                     <label class="switch"><input type="checkbox" name="requires_prescription"> Requires prescription (Rx)</label>
@@ -219,6 +226,17 @@ App.ready.then(async () => {
     };
     $('#q').addEventListener('input', App.debounce(reload));
     $('#cat').addEventListener('change', reload);
+    $('#type').addEventListener('change', reload);
+    // Click a column to sort by it; click it again to reverse.
+    $('#head').addEventListener('click', (e) => {
+        const th = e.target.closest('.th-sort')?.closest('th');
+        if (!th) return;
+        dir = sort === th.dataset.sort && dir === 'asc' ? 'desc' : 'asc';
+        sort = th.dataset.sort;
+        $('#head').querySelectorAll('[aria-sort]').forEach((el) => el.removeAttribute('aria-sort'));
+        th.setAttribute('aria-sort', dir === 'asc' ? 'ascending' : 'descending');
+        reload();
+    });
     $('#stock').addEventListener('change', reload);
 
     await loadLookups();
