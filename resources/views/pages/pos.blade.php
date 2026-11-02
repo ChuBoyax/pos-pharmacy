@@ -4,9 +4,6 @@
 @section('can', 'pos.sell')
 @section('page-class', 'fill')
 
-@section('bar-title', 'New sale')
-@section('bar-subtitle', 'Search or scan a product, then charge the customer.')
-
 @section('content')
     {{-- Three columns: products, the items being sold, and payment. --}}
     <div class="pos">
@@ -48,7 +45,7 @@
                         </label>
                         <label class="f">
                             <span id="customer-label">Customer (optional)</span>
-                            <input class="input" name="customer_name" placeholder="Walk-in customer">
+                            <input class="input" name="customer_name" placeholder="Walk-in">
                             <small class="f-err" data-err="customer_name"></small>
                         </label>
                         <label class="f" id="id-field" hidden>
@@ -80,12 +77,22 @@
                 <div id="pay-cash" class="cash">
                     <label class="tender">
                         <span>Amount tendered</span>
-                        {{-- inputmode="decimal": phones show a number keypad --}}
-                        <input class="num" name="amount_paid" id="tendered" type="text" inputmode="decimal" autocomplete="off" placeholder="₱0.00">
+                        {{-- inputmode="none": use the on-screen keypad, so phones don't pop up their keyboard --}}
+                        <input class="num" name="amount_paid" id="tendered" type="text" inputmode="none" autocomplete="off" placeholder="₱0.00">
                     </label>
                     <small class="f-err" data-err="amount_paid"></small>
                     <div class="quick" id="quick"></div>
                     <div class="change" id="change"><span>Change</span><span class="num">₱0.00</span></div>
+                    <div class="keypad" id="keypad">
+                        <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+                        <button type="button" data-k="back" class="fn" aria-label="Backspace"><svg class="i"><use href="#i-backspace"/></svg></button>
+                        <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+                        <button type="button" data-k="clear" class="fn" aria-label="Clear amount">C</button>
+                        <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+                        <button type="button" data-k="00" class="fn">00</button>
+                        <button type="button" data-k="0" class="wide">0</button><button type="button" data-k=".">.</button>
+                        <button type="button" data-k="exact" class="exact">Exact</button>
+                    </div>
                 </div>
 
                 <label class="f" id="pay-ref" hidden>
