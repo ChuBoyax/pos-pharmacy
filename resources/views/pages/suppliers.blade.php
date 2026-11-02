@@ -3,20 +3,15 @@
 @section('title', 'Suppliers')
 @section('can', 'suppliers.manage')
 
+@section('bar-title', 'Suppliers')
+@section('bar-subtitle', 'Distributors and manufacturers you order stock from.')
+@section('inv-actions')
+    <button class="btn" id="compare"><svg class="i"><use href="#i-scale"/></svg>Compare prices</button>
+    <button class="btn primary" id="add"><svg class="i"><use href="#i-plus"/></svg>Add supplier</button>
+@endsection
+
 @section('content')
     @include('partials.inventory-tabs')
-
-    <div class="head">
-        <div>
-            <div class="eyebrow">Inventory</div>
-            <h1>Suppliers</h1>
-            <p>Distributors and manufacturers you order stock from.</p>
-        </div>
-        <div class="head-r">
-            <button class="btn" id="compare"><svg class="i"><use href="#i-scale"/></svg>Compare prices</button>
-            <button class="btn primary" id="add"><svg class="i"><use href="#i-plus"/></svg>Add supplier</button>
-        </div>
-    </div>
 
     <div class="card">
         <div class="toolbar">

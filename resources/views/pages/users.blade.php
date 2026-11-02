@@ -3,19 +3,14 @@
 @section('title', 'Users')
 @section('can', 'users.manage')
 
-@section('content')
-    <div class="head">
-        <div>
-            <div class="eyebrow">Management</div>
-            <h1>Users & roles</h1>
-            <p>Staff accounts and what each one can access.</p>
-        </div>
-        <div class="head-r">
-            <a class="btn" href="{{ route('roles') }}" data-can="roles.manage"><svg class="i"><use href="#i-shield"/></svg>Roles & permissions</a>
-            <button class="btn primary" id="add"><svg class="i"><use href="#i-plus"/></svg>Add user</button>
-        </div>
-    </div>
+@section('bar-title', 'Users & roles')
+@section('bar-subtitle', 'Staff accounts and what each one can access.')
+@section('bar-actions')
+    <a class="btn" href="{{ route('roles') }}" data-can="roles.manage"><svg class="i"><use href="#i-shield"/></svg>Roles & permissions</a>
+    <button class="btn primary" id="add"><svg class="i"><use href="#i-plus"/></svg>Add user</button>
+@endsection
 
+@section('content')
     <section class="kpis" id="role-cards"></section>
 
     <div class="card">

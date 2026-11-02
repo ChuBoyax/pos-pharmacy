@@ -2,19 +2,18 @@
 
 @section('title', 'Dashboard')
 
-@section('content')
-    <div class="head in">
-        <div>
-            <div class="eyebrow" id="today"></div>
-            <h1 id="greet">Dashboard</h1>
-            <p>Here's how your pharmacy is performing today.</p>
-        </div>
-        <div class="head-r">
-            <a href="{{ route('reports') }}" class="btn hide-sm" data-can="reports.view"><svg class="i"><use href="#i-chart"/></svg>View reports</a>
-            <a href="{{ route('pos') }}" class="btn primary"><svg class="i"><use href="#i-plus"/></svg>New sale</a>
-        </div>
-    </div>
+@section('bar-title')
+    <span id="greet">Dashboard</span>
+@endsection
+@section('bar-subtitle')
+    <span id="today"></span> · Here's how your pharmacy is performing today.
+@endsection
+@section('bar-actions')
+    <a href="{{ route('reports') }}" class="btn hide-sm" data-can="reports.view"><svg class="i"><use href="#i-chart"/></svg>View reports</a>
+    <a href="{{ route('pos') }}" class="btn primary"><svg class="i"><use href="#i-plus"/></svg>New sale</a>
+@endsection
 
+@section('content')
     <section class="kpis" id="kpis">
         @for ($i = 0; $i < 4; $i++)
             <div class="card kpi"><span class="skeleton" style="width:50%"></span><span class="skeleton" style="width:70%;height:28px;margin:16px 0 10px"></span><span class="skeleton" style="width:40%"></span></div>

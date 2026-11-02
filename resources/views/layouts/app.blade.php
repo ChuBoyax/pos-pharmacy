@@ -61,6 +61,15 @@
     <div class="wrap">
         <header class="bar">
             <button class="icon-btn menu-btn" id="menu" aria-label="Open menu"><svg class="i"><use href="#i-menu"/></svg></button>
+            @hasSection('bar-title')
+                <div class="bar-title">
+                    <h1>@yield('bar-title')</h1>
+                    <p>@yield('bar-subtitle')</p>
+                </div>
+            @endif
+            @hasSection('bar-actions')
+                <div class="bar-actions">@yield('bar-actions')</div>
+            @endif
             <div class="bar-r">
                 <a class="icon-btn" href="{{ route('stock') }}?status=expiring" data-can="stock.manage" aria-label="Inventory alerts" title="Inventory alerts">
                     <svg class="i"><use href="#i-bell"/></svg><span class="dot" id="alert-dot" hidden></span>

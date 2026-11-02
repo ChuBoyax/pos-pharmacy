@@ -55,7 +55,12 @@ textarea.input{resize:vertical;min-height:80px}
 .tabs button,.tabs a{padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;align-items:center;gap:8px}
 .tabs button:hover,.tabs a:hover{color:var(--ink)}
 .tabs button.on,.tabs a.on{color:var(--brand-ink);border-color:var(--brand)}
-.inv-tabs{margin-bottom:22px;scrollbar-width:none}
+/* Tabs on the left, the current tab's actions on the right, sharing one underline */
+.inv-bar{display:flex;align-items:flex-end;flex-wrap:wrap;gap:8px 12px;border-bottom:1px solid var(--line)}
+.inv-tabs{flex:1 1 auto;min-width:0;margin-bottom:0;border-bottom:0;scrollbar-width:none}
+.inv-tabs a{margin-bottom:0}
+.inv-actions{margin-left:auto;padding-bottom:8px;display:flex;align-items:center;gap:8px}
+.inv-actions .btn{white-space:nowrap}
 .inv-tabs .i{width:17px;height:17px}
 .inv-tabs .stock-badge{background:var(--bad-soft);color:var(--bad);border-color:transparent;font-weight:700}
 .tabs .count{font-size:11px;padding:1px 7px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line)}
@@ -103,7 +108,7 @@ textarea.input{resize:vertical;min-height:80px}
 
 /* ---------- POS ---------- */
 /* POS fills the screen: the product list and the cart each scroll on their own. */
-.page.fill{height:calc(100vh - 69px);min-height:560px;padding-bottom:24px;overflow:hidden}
+.page.fill{height:calc(100vh - 69px);min-height:560px;padding-top:20px;padding-bottom:24px;overflow:hidden}
 .page.fill .pos{flex:1;min-height:0}
 /* Cart grows a little on very wide screens; the product grid takes the rest */
 .pos{display:grid;grid-template-columns:minmax(0,1fr) clamp(380px,24vw,470px);gap:18px;align-items:stretch}

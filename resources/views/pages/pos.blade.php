@@ -4,15 +4,10 @@
 @section('can', 'pos.sell')
 @section('page-class', 'fill')
 
-@section('content')
-    <div class="head">
-        <div>
-            <h1>New sale</h1>
-            <p>Search or scan a product, then charge the customer.</p>
-        </div>
-        <div class="eyebrow">Point of Sale</div>
-    </div>
+@section('bar-title', 'New sale')
+@section('bar-subtitle', 'Search or scan a product, then charge the customer.')
 
+@section('content')
     <div class="pos">
         <section class="pos-left">
             <div class="pos-search">
