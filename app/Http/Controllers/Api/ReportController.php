@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Batch;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use Illuminate\Http\JsonResponse;
@@ -32,6 +33,11 @@ class ReportController extends Controller
         $summary = $paid()->selectRaw('count(*) as transactions, coalesce(sum(subtotal), 0) as gross, coalesce(sum(discount), 0) as discounts, coalesce(sum(vat), 0) as vat, coalesce(sum(total), 0) as net')->first();
         $cogs = (float) $items()->leftJoin('batches', 'batches.id', '=', 'sale_items.batch_id')->sum(DB::raw('sale_items.quantity * coalesce(batches.cost, 0)'));
         $voided = $sales()->where('status', Sale::STATUS_VOIDED)->selectRaw('count(*) as count, coalesce(sum(total), 0) as total')->first();
+        $daily = $paid()
+            ->selectRaw('date(created_at) as day, count(*) as transactions, sum(discount) as discounts, sum(total) as total')
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
 
         return response()->json([
             'range' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
@@ -48,11 +54,17 @@ class ReportController extends Controller
                 'voided_count' => (int) $voided->count,
                 'voided_total' => (float) $voided->total,
             ],
-            'daily' => $paid()
-                ->selectRaw('date(created_at) as day, count(*) as transactions, sum(discount) as discounts, sum(total) as total')
-                ->groupBy('day')
-                ->orderBy('day')
-                ->get(),
+            'daily' => $daily,
+            'monthly' => $daily
+                ->groupBy(fn ($day) => substr((string) $day->day, 0, 7))
+                ->map(fn ($days, $month) => [
+                    'month' => $month,
+                    'transactions' => (int) $days->sum('transactions'),
+                    'discounts' => round($days->sum('discounts'), 2),
+                    'total' => round($days->sum('total'), 2),
+                ])
+                ->values(),
+            'inventory' => $this->inventoryValue(),
             'products' => $items()
                 ->selectRaw('sale_items.name, sum(sale_items.quantity) as units, sum(sale_items.total) as revenue')
                 ->groupBy('sale_items.name')
@@ -83,5 +95,29 @@ class ReportController extends Controller
                 ->groupBy('discount_type')
                 ->get(),
         ]);
+    }
+
+    /**
+     * What the stock on hand is worth right now, at what it cost and at what it sells for.
+     * Expired stock can't be sold, so it is counted on its own.
+     *
+     * @return array<string, array<string, float|int>>
+     */
+    private function inventoryValue(): array
+    {
+        $today = today()->toDateString();
+        $value = function (string $operator) use ($today) {
+            $row = Batch::query()
+                ->join('medicines', 'medicines.id', '=', 'batches.medicine_id')
+                ->where('batches.quantity', '>', 0)
+                ->where('batches.expiry_date', $operator, $today)
+                ->selectRaw('coalesce(sum(batches.quantity), 0) as units, coalesce(sum(batches.quantity * batches.cost), 0) as at_cost, coalesce(sum(batches.quantity * medicines.price), 0) as at_srp')
+                ->toBase()
+                ->first();
+
+            return ['units' => (int) $row->units, 'at_cost' => round((float) $row->at_cost, 2), 'at_srp' => round((float) $row->at_srp, 2)];
+        };
+
+        return ['sellable' => $value('>'), 'expired' => $value('<=')];
     }
 }

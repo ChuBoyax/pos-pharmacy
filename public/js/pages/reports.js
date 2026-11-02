@@ -10,6 +10,7 @@ App.ready.then(() => {
             '7d': [new Date(t.getFullYear(), t.getMonth(), t.getDate() - 6), t],
             month: [new Date(t.getFullYear(), t.getMonth(), 1), t],
             last: [new Date(t.getFullYear(), t.getMonth() - 1, 1), new Date(t.getFullYear(), t.getMonth(), 0)],
+            year: [new Date(t.getFullYear(), 0, 1), t],
         };
         $('#from').value = iso(ranges[p][0]);
         $('#to').value = iso(ranges[p][1]);
@@ -37,6 +38,15 @@ App.ready.then(() => {
         ];
         $('#summary').innerHTML = cards.map(([l, v, sub]) => `<div class="card mini"><small>${l}</small><b class="num">${v}</b><span>${sub}</span></div>`).join('');
 
+        const { sellable, expired } = report.inventory;
+        const potential = sellable.at_srp - sellable.at_cost;
+        $('#inventory').innerHTML = [
+            ['At cost', peso(sellable.at_cost), `${num(sellable.units)} sellable units`],
+            ['At selling price (SRP)', peso(sellable.at_srp), 'if everything sells at list price'],
+            ['Potential margin', peso(potential), `${sellable.at_srp ? Math.round((potential / sellable.at_srp) * 100) : 0}% of SRP value`],
+            ['Expired stock', peso(expired.at_cost), `${num(expired.units)} units at cost, not sellable`],
+        ].map(([l, v, sub]) => `<div class="mini"><small>${l}</small><b class="num">${v}</b><span>${sub}</span></div>`).join('');
+
         drawChart();
 
         const empty = (cols) => App.emptyRow(cols, 'No sales in this period.', 'chart');
@@ -61,6 +71,69 @@ App.ready.then(() => {
         $('#daily').innerHTML = report.daily.length
             ? [...report.daily].reverse().map((d) => `<tr><td>${App.date(d.day)}</td><td class="r num">${num(d.transactions)}</td><td class="r num">${peso(d.discounts)}</td><td class="r num"><b>${peso(d.total)}</b></td></tr>`).join('')
             : empty(4);
+
+        $('#monthly').innerHTML = report.monthly.length
+            ? [...report.monthly].reverse().map((m) => `<tr><td>${monthName(m.month)}</td><td class="r num">${num(m.transactions)}</td><td class="r num">${peso(m.discounts)}</td><td class="r num"><b>${peso(m.total)}</b></td></tr>`).join('')
+            : empty(4);
+    }
+
+    const monthName = (m) => new Date(`${m}-01T00:00:00`).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
+
+    /* ---------- End of day ---------- */
+    function eodHtml(r, settings, date) {
+        const s = r.summary;
+        const ln = (l, v, cls = '') => `<div class="ln ${cls}"><span>${esc(l)}</span><span>${v}</span></div>`;
+        const cash = r.payments.find((p) => p.payment_method === 'cash');
+        return `<div class="receipt">
+            <div class="c"><h4>${esc(settings.store_name)}</h4><div>END OF DAY REPORT</div><div>${App.date(date)}</div></div>
+            <hr>
+            ${ln('Paid transactions', num(s.transactions))}
+            ${ln('Items sold', num(s.items_sold))}
+            ${ln('Voided sales', `${num(s.voided_count)} (${peso(s.voided_total)})`)}
+            <hr>
+            ${ln('Gross sales', peso(s.gross))}
+            ${ln('Discounts', `−${peso(s.discounts)}`)}
+            ${ln('VAT included', peso(s.vat))}
+            ${ln('NET SALES', peso(s.net), 'big')}
+            <hr>
+            ${r.payments.length ? r.payments.map((p) => ln(`${labels.payment[p.payment_method]} (${num(p.transactions)})`, peso(p.total))).join('') : ln('No payments', peso(0))}
+            ${ln('Expected cash in drawer', peso(cash?.total ?? 0), 'big')}
+            <hr>
+            ${r.cashiers.length ? r.cashiers.map((c) => ln(`${c.name} (${num(c.transactions)})`, peso(c.total))).join('') : ln('No cashier sales', peso(0))}
+            <hr>
+            ${ln('Cost of goods', peso(s.cogs))}
+            ${ln('Gross profit', peso(s.profit))}
+            <hr>
+            <div class="c">Printed ${App.datetime(new Date().toISOString())}</div>
+        </div>`;
+    }
+
+    async function endOfDay() {
+        const settings = await App.settings();
+        let html = '';
+        App.modal({
+            title: 'End of day report',
+            size: 'sm',
+            body: `<label class="f" style="margin-bottom:14px"><span>Date</span><input class="input" type="date" id="eod-date" max="${iso(new Date())}" value="${iso(new Date())}"></label><div id="eod-body"></div>`,
+            footer: `<button type="button" class="btn" data-close>Close</button><button type="button" class="btn primary" id="eod-print">${App.icon('printer')}Print</button>`,
+            onOpen: (form) => {
+                const show = async () => {
+                    const date = form.querySelector('#eod-date').value;
+                    if (!date) return;
+                    const res = await App.api('/reports', { query: { from: date, to: date } });
+                    if (!res.ok) return App.fail(null, res);
+                    html = eodHtml(res.data, settings, date);
+                    form.querySelector('#eod-body').innerHTML = html;
+                };
+                form.querySelector('#eod-date').addEventListener('change', show);
+                form.querySelector('#eod-print').addEventListener('click', () => {
+                    if (!html) return;
+                    $('#print-area').innerHTML = html;
+                    window.print();
+                });
+                show();
+            },
+        });
     }
 
     function drawChart() {
@@ -109,6 +182,13 @@ App.ready.then(() => {
             ['Daily sales'], ['Date', 'Transactions', 'Discounts', 'Net sales'],
             ...report.daily.map((d) => [d.day, d.transactions, d.discounts, d.total]),
             [],
+            ['Monthly sales'], ['Month', 'Transactions', 'Discounts', 'Net sales'],
+            ...report.monthly.map((m) => [m.month, m.transactions, m.discounts, m.total]),
+            [],
+            ['Inventory value (today)'], ['', 'Units', 'At cost', 'At SRP'],
+            ['Sellable', report.inventory.sellable.units, report.inventory.sellable.at_cost, report.inventory.sellable.at_srp],
+            ['Expired', report.inventory.expired.units, report.inventory.expired.at_cost, report.inventory.expired.at_srp],
+            [],
             ['Top products'], ['Product', 'Units', 'Revenue'],
             ...report.products.map((p) => [p.name, p.units, p.revenue]),
             [],
@@ -135,6 +215,7 @@ App.ready.then(() => {
         load();
     }));
     $('#export').addEventListener('click', exportCsv);
+    $('#eod').addEventListener('click', endOfDay);
     new ResizeObserver(drawChart).observe($('#daily-chart'));
 
     preset('month');

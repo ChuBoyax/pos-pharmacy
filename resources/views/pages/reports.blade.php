@@ -9,6 +9,7 @@
 @endsection
 @section('bar-actions')
     <button class="btn" id="export"><svg class="i"><use href="#i-download"/></svg>Export CSV</button>
+    <button class="btn primary" id="eod"><svg class="i"><use href="#i-receipt"/></svg>End of day</button>
 @endsection
 
 @section('content')
@@ -19,6 +20,7 @@
                 <button data-p="7d">7 days</button>
                 <button data-p="month" class="on">This month</button>
                 <button data-p="last">Last month</button>
+                <button data-p="year">This year</button>
             </div>
             <span class="spacer"></span>
             <input class="input" type="date" id="from" aria-label="From date">
@@ -28,6 +30,11 @@
     </div>
 
     <section class="kpis six" id="summary"></section>
+
+    <div class="card">
+        <div class="card-h"><div><h3>Inventory value</h3><p>Stock on hand right now, whatever dates are selected above</p></div></div>
+        <div class="inv-vals" id="inventory"></div>
+    </div>
 
     <div class="card">
         <div class="card-h"><div><h3>Daily net sales</h3><p>Paid transactions per day</p></div></div>
@@ -56,10 +63,16 @@
         </div>
     </section>
 
-    <div class="card">
-        <div class="card-h"><div><h3>Daily breakdown</h3></div></div>
-        <div class="table-scroll"><table class="tbl"><thead><tr><th>Date</th><th class="r">Transactions</th><th class="r">Discounts</th><th class="r">Net sales</th></tr></thead><tbody id="daily"></tbody></table></div>
-    </div>
+    <section class="split">
+        <div class="card">
+            <div class="card-h"><div><h3>Monthly breakdown</h3><p>Use "This year" to compare months</p></div></div>
+            <div class="table-scroll"><table class="tbl"><thead><tr><th>Month</th><th class="r">Transactions</th><th class="r">Discounts</th><th class="r">Net sales</th></tr></thead><tbody id="monthly"></tbody></table></div>
+        </div>
+        <div class="card">
+            <div class="card-h"><div><h3>Daily breakdown</h3><p>Latest day first</p></div></div>
+            <div class="table-scroll"><table class="tbl"><thead><tr><th>Date</th><th class="r">Transactions</th><th class="r">Discounts</th><th class="r">Net sales</th></tr></thead><tbody id="daily"></tbody></table></div>
+        </div>
+    </section>
 @endsection
 
 @push('scripts')
