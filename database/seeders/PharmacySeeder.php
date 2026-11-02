@@ -80,6 +80,7 @@ class PharmacySeeder extends Seeder
                 'name' => $name,
                 'generic_name' => $generic,
                 'category_id' => $categories[$category],
+                'product_type' => in_array($unit, ['tablet', 'capsule'], true) ? 'oral' : null,
                 'supplier_id' => $suppliers->random(),
                 'unit' => $unit,
                 'price' => $price,

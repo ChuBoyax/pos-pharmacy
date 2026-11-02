@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MedicineRequest;
+use App\Models\Category;
 use App\Models\Medicine;
 use App\Models\SaleItem;
 use App\Services\ImageOptimizer;
 use App\Services\ImageStore;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -25,12 +27,33 @@ class MedicineController extends Controller
                 ->orWhereLike('generic_name', "%{$s}%")
                 ->orWhereLike('sku', "%{$s}%")))
             ->when($request->category_id, fn ($q, $id) => $q->where('category_id', $id))
+            ->when($request->product_type, fn ($q, $type) => $q->where('product_type', $type))
             ->when($request->stock === 'low', fn ($q) => $q->lowStock())
             ->when($request->stock === 'out', fn ($q) => $q->outOfStock())
-            ->when($request->boolean('sellable'), fn ($q) => $q->where('is_active', true)->inStock())
-            ->orderBy('name');
+            ->when($request->boolean('sellable'), fn ($q) => $q->where('is_active', true)->inStock());
+
+        $this->sort($medicines, $request->input('sort'), $request->input('dir') === 'desc' ? 'desc' : 'asc');
 
         return response()->json($medicines->paginate(min($request->integer('per_page', 15), 100)));
+    }
+
+    /**
+     * Only known columns can be sorted on. Blank values go last in both directions, whatever
+     * the database's default, and name + id keep paging stable when values tie.
+     */
+    private function sort(Builder $query, ?string $sort, string $direction): void
+    {
+        match ($sort) {
+            'price', 'stock' => $query->orderBy($sort, $direction),
+            'product_type' => $query->orderByRaw('product_type is null')->orderBy('product_type', $direction),
+            'category' => $query->orderByRaw('category_id is null')->orderBy(
+                Category::select('name')->whereColumn('categories.id', 'medicines.category_id'),
+                $direction,
+            ),
+            default => $query->orderBy('name', $direction),
+        };
+
+        $query->orderBy('name')->orderBy('medicines.id');
     }
 
     public function show(Medicine $medicine): JsonResponse

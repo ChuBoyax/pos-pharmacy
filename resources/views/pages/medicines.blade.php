@@ -17,6 +17,12 @@
         <div class="toolbar">
             <label class="in-search"><svg class="i"><use href="#i-search"/></svg><input class="input" id="q" type="search" placeholder="Name, generic name or SKU"></label>
             <select class="input" id="cat"><option value="">All categories</option></select>
+            <select class="input" id="type">
+                <option value="">All types</option>
+                @foreach (App\Models\Medicine::PRODUCT_TYPES as $value => $label)
+                    <option value="{{ $value }}">{{ $label }}</option>
+                @endforeach
+            </select>
             <select class="input" id="stock">
                 <option value="">All stock levels</option>
                 <option value="low">Low stock</option>
@@ -25,7 +31,14 @@
         </div>
         <div class="table-scroll">
             <table class="tbl">
-                <thead><tr><th>Medicine</th><th>Category</th><th class="r">Price</th><th class="r">Stock</th><th>Supplier</th><th>Status</th><th></th></tr></thead>
+                <thead id="head"><tr>
+                    <th data-sort="name" aria-sort="ascending"><button type="button" class="th-sort">Medicine</button></th>
+                    <th data-sort="category"><button type="button" class="th-sort">Category</button></th>
+                    <th data-sort="product_type"><button type="button" class="th-sort">Type</button></th>
+                    <th class="r" data-sort="price"><button type="button" class="th-sort">Price</button></th>
+                    <th class="r" data-sort="stock"><button type="button" class="th-sort">Stock</button></th>
+                    <th>Supplier</th><th>Status</th><th></th>
+                </tr></thead>
                 <tbody id="rows"></tbody>
             </table>
         </div>

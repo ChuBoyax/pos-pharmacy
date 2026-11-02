@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Requests\LoginRequest;
 use App\Models\Batch;
+use App\Models\Category;
 use App\Models\Medicine;
 use App\Models\Role;
 use App\Models\Sale;
@@ -293,6 +294,47 @@ class PharmacyTest extends TestCase
             ->assertJsonPath('0.user.name', $pharmacist->name);
     }
 
+    public function test_receiving_stock_computes_the_actual_cost_per_piece(): void
+    {
+        Sanctum::actingAs($this->user('pharmacist'));
+        $medicine = $this->medicine(['price' => 8, 'cost' => 1]);
+        $receive = fn (array $purchase) => $this->postJson('/api/batches', [
+            'medicine_id' => $medicine->id,
+            'batch_no' => 'B1',
+            'expiry_date' => today()->addYear()->toDateString(),
+            ...$purchase,
+        ]);
+
+        // 10 + 2 on a box of 100: pays for 10 boxes, receives 12.
+        $receive(['packs_bought' => 10, 'pack_size' => 100, 'list_price' => 500, 'deal_buy' => 10, 'deal_free' => 2])
+            ->assertCreated()
+            ->assertJsonPath('quantity', 1200)
+            ->assertJsonPath('quantity_received', 1200)
+            ->assertJsonPath('free_packs', 2)
+            ->assertJsonPath('total_cost', '5000.00')
+            ->assertJsonPath('cost', '4.1667')
+            ->assertJsonPath('effective_discount', '16.67');
+
+        // The cost follows the delivery; the selling price stays as set.
+        $this->assertSame('4.17', $medicine->fresh()->cost);
+        $this->assertSame('8.00', $medicine->fresh()->price);
+
+        // 5% off a box of 24.
+        $receive(['packs_bought' => 5, 'pack_size' => 24, 'list_price' => 240, 'discount_percent' => 5])
+            ->assertCreated()->assertJsonPath('quantity', 120)->assertJsonPath('total_cost', '1140.00')->assertJsonPath('cost', '9.5000');
+
+        // Only whole deals earn free packs.
+        $receive(['packs_bought' => 15, 'pack_size' => 1, 'list_price' => 10, 'deal_buy' => 10, 'deal_free' => 5])
+            ->assertCreated()->assertJsonPath('free_packs', 5)->assertJsonPath('quantity', 20);
+
+        // The amount actually paid overrides the computed total.
+        $receive(['packs_bought' => 10, 'pack_size' => 100, 'list_price' => 500, 'discount_percent' => 50, 'total_cost' => 4500])
+            ->assertCreated()->assertJsonPath('cost', '4.5000')->assertJsonPath('effective_discount', '10.00');
+
+        $receive(['pack_size' => 1])->assertStatus(422)->assertJsonValidationErrors('packs_bought');
+        $receive(['packs_bought' => 1, 'pack_size' => 1, 'deal_buy' => 10])->assertStatus(422)->assertJsonValidationErrors('deal_free');
+    }
+
     public function test_supplier_comparison_ranks_suppliers_by_latest_cost(): void
     {
         Sanctum::actingAs($this->user('pharmacist'));
@@ -373,6 +415,34 @@ class PharmacyTest extends TestCase
 
         $this->deleteJson("/api/medicines/{$medicine->id}/image")->assertOk()->assertJsonPath('image_url', null);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/delete') && $request['urls'] === [$blobUrl]);
+    }
+
+    public function test_medicines_can_be_filtered_by_type_and_sorted(): void
+    {
+        Sanctum::actingAs($this->user('pharmacist'));
+        $beta = Category::create(['name' => 'Beta']);
+        $alpha = Category::create(['name' => 'Alpha']);
+        $cheap = $this->medicine(['name' => 'Cheap', 'price' => 5, 'product_type' => 'oral', 'category_id' => $beta->id]);
+        $dear = $this->medicine(['name' => 'Dear', 'price' => 50, 'product_type' => 'injectable', 'category_id' => $alpha->id]);
+        $untyped = $this->medicine(['name' => 'Untyped', 'price' => 20]);
+        $this->batch($cheap, 3, today()->addYear()->toDateString());
+        $this->batch($dear, 9, today()->addYear()->toDateString());
+
+        $names = fn (string $query) => $this->getJson("/api/medicines?{$query}")->assertOk()->json('data.*.name');
+
+        $this->assertSame(['Dear'], $names('product_type=injectable'));
+        $this->assertSame(['Cheap', 'Untyped', 'Dear'], $names('sort=price'));
+        $this->assertSame(['Dear', 'Untyped', 'Cheap'], $names('sort=price&dir=desc'));
+        $this->assertSame(['Dear', 'Cheap', 'Untyped'], $names('sort=stock&dir=desc'));
+        $this->assertSame(['Dear', 'Cheap', 'Untyped'], $names('sort=category'));
+        $this->assertSame(['Dear', 'Cheap', 'Untyped'], $names('sort=product_type&dir=asc'), 'Blank types go last.');
+        $this->assertSame(['Cheap', 'Dear', 'Untyped'], $names('sort=product_type&dir=desc'), 'Blank types go last.');
+        $this->assertSame(['Cheap', 'Dear', 'Untyped'], $names('sort=password'), 'Unknown columns fall back to name.');
+
+        $this->putJson("/api/medicines/{$untyped->id}", ['sku' => $untyped->sku, 'name' => 'Untyped', 'unit' => 'tablet', 'price' => 20, 'reorder_level' => 1, 'product_type' => 'magic'])
+            ->assertStatus(422)->assertJsonValidationErrors('product_type');
+        $this->putJson("/api/medicines/{$untyped->id}", ['sku' => $untyped->sku, 'name' => 'Untyped', 'unit' => 'tablet', 'price' => 20, 'reorder_level' => 1, 'product_type' => 'topical'])
+            ->assertOk()->assertJsonPath('product_type', 'topical');
     }
 
     public function test_uploaded_images_are_resized_and_converted_to_webp(): void

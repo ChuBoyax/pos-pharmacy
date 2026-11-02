@@ -11,6 +11,46 @@ App.ready.then(async () => {
     if (params.get('status')) status = params.get('status');
     [...$('#tabs').children].forEach((b) => b.classList.toggle('on', b.dataset.s === status));
 
+    // Pack size, deal and real discount under a batch's unit cost (older batches have none).
+    const costNote = (b) => {
+        if (!b.packs_bought) return '';
+        const parts = [`${num(b.pack_size)}/pack`];
+        if (b.deal_buy) parts.push(`${b.deal_buy}+${b.deal_free}`);
+        if (+b.effective_discount) parts.push(`${+b.effective_discount}% off`);
+        return `<br><small class="muted">${parts.join(' · ')}</small>`;
+    };
+
+    // Mirrors App\Services\PurchaseCosting for the live preview; the server computes the saved values.
+    function costing(d) {
+        const packs = +d.packs_bought || 0;
+        const size = +d.pack_size || 0;
+        const list = +d.list_price || 0;
+        const free = +d.deal_buy && +d.deal_free ? Math.floor(packs / +d.deal_buy) * +d.deal_free : 0;
+        const quantity = (packs + free) * size;
+        const total = d.total_cost !== null ? +d.total_cost : packs * list * (1 - (+d.discount_percent || 0) / 100);
+        const catalog = (packs + free) * list;
+        return {
+            free,
+            quantity,
+            total,
+            cost: quantity ? total / quantity : 0,
+            effective: catalog > 0 ? Math.max(0, 1 - total / catalog) * 100 : 0,
+        };
+    }
+
+    function costingPreview(c, medicine) {
+        const row = (label, value, cls = '') => `<div class="${cls}"><span>${label}</span><b class="num">${value}</b></div>`;
+        const margin = medicine ? +medicine.price - c.cost : null;
+        return row('Stock to add', `${num(c.quantity)} ${esc(medicine?.unit ?? 'pcs')}${c.free ? ` (${num(c.free)} free pack${c.free > 1 ? 's' : ''})` : ''}`)
+            + row('Total purchase cost', peso(c.total))
+            + row('Effective discount', `${c.effective.toFixed(2)}%`)
+            + row('Actual cost per piece', peso(c.cost, 4), 'key')
+            + (medicine
+                ? row('Selling price', peso(medicine.price))
+                    + row('Margin per piece', `${peso(margin)}${+medicine.price ? ` (${((margin / +medicine.price) * 100).toFixed(1)}%)` : ''}`, margin < 0 ? 'loss' : '')
+                : '');
+    }
+
     async function load() {
         $('#rows').innerHTML = App.loadingRows(8);
         const res = await App.api('/batches', { query: { page, status, search: $('#q').value.trim() } });
@@ -30,7 +70,7 @@ App.ready.then(async () => {
                     <td>${App.date(b.expiry_date)}<br><span class="pill ${exp[0]}">${exp[1]}</span></td>
                     <td style="min-width:130px"><b class="num">${num(b.quantity)}</b> <small class="muted">/ ${num(b.quantity_received)} ${esc(b.medicine?.unit)}</small>
                         <div class="bar-m"><i style="width:${pct}%;background:var(--brand)"></i></div></td>
-                    <td class="r num">${peso(b.cost)}</td>
+                    <td class="r num">${peso(b.cost, (+b.cost).toFixed(4).endsWith('00') ? 2 : 4)}${costNote(b)}</td>
                     <td><div class="acts">
                         <button class="act" data-act="adjust" title="Adjust quantity">${icon('edit')}</button>
                         <button class="act" data-act="history" title="Adjustment history">${icon('history')}</button>
@@ -53,27 +93,43 @@ App.ready.then(async () => {
         App.modal({
             title: 'Receive stock',
             submit: 'Add to inventory',
+            size: 'lg',
             body: `<div class="form">
                 ${field('Medicine', 'medicine_id', select('medicine_id', [['', 'Select a medicine…'], ...medicines.map((m) => [m.id, `${m.name} (${m.sku})`])], 'required'), { full: true })}
                 ${field('Supplier', 'supplier_id', select('supplier_id', [['', '— None —'], ...(sups.ok ? sups.data : []).map((s) => [s.id, s.name])]))}
                 ${field('Batch / lot no.', 'batch_no', input('batch_no', 'required placeholder="e.g. B24091"'))}
-                ${field('Quantity received', 'quantity', input('quantity', 'type="number" min="1" required'))}
-                ${field('Unit cost', 'cost', input('cost', 'type="number" min="0" step="0.01"'))}
                 ${field('Expiry date', 'expiry_date', input('expiry_date', `type="date" min="${today}" required`))}
                 ${field('Date received', 'received_at', input('received_at', `type="date" max="${today}" value="${today}"`))}
+                <div class="f full form-sec">Purchase details</div>
+                ${field('Packs bought (paid)', 'packs_bought', input('packs_bought', 'type="number" min="1" required placeholder="e.g. 10"'))}
+                ${field('Pieces per pack', 'pack_size', input('pack_size', 'type="number" min="1" required value="1"'), { hint: 'Box of 100 = 100. Single pieces = 1.' })}
+                ${field('Catalog price per pack', 'list_price', input('list_price', 'type="number" min="0" step="0.01" placeholder="₱0.00"'))}
+                ${field('Discount %', 'discount_percent', input('discount_percent', 'type="number" min="0" max="100" step="0.01" placeholder="0"'))}
+                <div class="f"><span>Deal (buy + free packs)</span>
+                    <div class="deal">
+                        <input class="input" name="deal_buy" type="number" min="1" placeholder="10" aria-label="Packs to buy">
+                        <b>+</b>
+                        <input class="input" name="deal_free" type="number" min="1" placeholder="2" aria-label="Free packs">
+                    </div>
+                    <small class="f-err" data-err="deal_buy"></small><small class="f-err" data-err="deal_free"></small>
+                </div>
+                ${field('Total amount paid', 'total_cost', input('total_cost', 'type="number" min="0" step="0.01" placeholder="Auto-computed"'), { hint: 'Optional. Enter the invoice amount if it differs.' })}
+                <div class="cost-box full" id="cost-box"></div>
             </div>`,
             onOpen: (form) => {
+                const selected = () => medicines.find((x) => x.id === +form.medicine_id.value);
+                const refresh = () => {
+                    form.querySelector('#cost-box').innerHTML = costingPreview(costing(App.read(form)), selected());
+                };
                 const sync = () => {
-                    const m = medicines.find((x) => x.id === +form.medicine_id.value);
-                    if (!m) return;
-                    if (m.supplier_id) form.supplier_id.value = m.supplier_id;
-                    form.cost.value = m.cost;
+                    const m = selected();
+                    if (m?.supplier_id) form.supplier_id.value = m.supplier_id;
+                    refresh();
                 };
                 form.medicine_id.addEventListener('change', sync);
-                if (preselect) {
-                    form.medicine_id.value = preselect;
-                    sync();
-                }
+                form.addEventListener('input', refresh);
+                if (preselect) form.medicine_id.value = preselect;
+                sync();
             },
             onSubmit: async (form) => {
                 const res = await App.api('/batches', { method: 'POST', body: App.read(form) });
