@@ -27,7 +27,8 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        // Staff may share an account, so logging out ends its sessions on every device.
+        $request->user()->tokens()->delete();
 
         return response()->json(['message' => 'Logged out.']);
     }

@@ -50,7 +50,7 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' => 720, // 12 hours, long enough for a full shift
 
     /*
     |--------------------------------------------------------------------------
