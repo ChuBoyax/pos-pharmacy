@@ -122,6 +122,13 @@ class PharmacyTest extends TestCase
         $get()->assertUnauthorized();
     }
 
+    public function test_pages_load_scripts_versioned_by_their_contents(): void
+    {
+        $version = substr(md5_file(public_path('js/app.js')), 0, 12);
+
+        $this->get('/dashboard')->assertOk()->assertSee("/js/app.js?v={$version}", false);
+    }
+
     public function test_checkout_deducts_from_the_earliest_expiring_batch_first(): void
     {
         Sanctum::actingAs($this->user('cashier'));
