@@ -293,6 +293,23 @@ const App = (() => {
         });
     }
 
+    // Leaves the page soon after the session ends elsewhere or expires, even if nobody clicks anything.
+    function watchSession() {
+        const leave = () => {
+            Auth.clear();
+            location.href = '/';
+        };
+        const check = async () => {
+            if (document.hidden) return;
+            const res = await Auth.api('/user').catch(() => null); // offline isn't logged out
+            if (res?.status === 401) leave();
+        };
+
+        setInterval(check, 30000);
+        document.addEventListener('visibilitychange', check);
+        window.addEventListener('storage', (e) => e.key === 'pos_token' && !e.newValue && leave()); // another tab
+    }
+
     // True when the user holds any of the comma-separated permissions (an empty list means everyone).
     let permissions = [];
     const can = (list = '') => !list || list.split(',').some((p) => permissions.includes(p.trim()));
@@ -339,6 +356,7 @@ const App = (() => {
         }
 
         $('#splash').remove();
+        watchSession();
 
         if (can('stock.manage,medicines.manage')) {
             api('/medicines', { query: { stock: 'low', per_page: 1 } }).then((r) => {

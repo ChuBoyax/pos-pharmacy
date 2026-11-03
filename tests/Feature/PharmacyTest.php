@@ -83,6 +83,45 @@ class PharmacyTest extends TestCase
             ->assertJsonPath('errors.email.0', fn ($message) => str_starts_with($message, 'Too many login attempts'));
     }
 
+    public function test_logging_out_ends_the_accounts_sessions_on_every_device(): void
+    {
+        $user = User::factory()->create(['email' => 'a@b.test', 'password' => 'secret123']);
+        $other = User::factory()->create();
+        $mine = $user->createToken('device-a')->plainTextToken;
+        $theirs = $user->createToken('device-b')->plainTextToken;
+        $unrelated = $other->createToken('device-c')->plainTextToken;
+        $get = function (string $token) {
+            $this->app['auth']->forgetGuards();
+
+            return $this->withToken($token)->getJson('/api/user');
+        };
+
+        $get($theirs)->assertOk();
+
+        $this->app['auth']->forgetGuards();
+        $this->withToken($mine)->postJson('/api/logout')->assertOk();
+
+        $get($mine)->assertUnauthorized();
+        $get($theirs)->assertUnauthorized();
+        $get($unrelated)->assertOk();
+    }
+
+    public function test_sessions_expire_after_twelve_hours(): void
+    {
+        $token = User::factory()->create()->createToken('device')->plainTextToken;
+        $get = function () use ($token) {
+            $this->app['auth']->forgetGuards();
+
+            return $this->withToken($token)->getJson('/api/user');
+        };
+
+        $this->travel(719)->minutes();
+        $get()->assertOk();
+
+        $this->travel(2)->minutes();
+        $get()->assertUnauthorized();
+    }
+
     public function test_checkout_deducts_from_the_earliest_expiring_batch_first(): void
     {
         Sanctum::actingAs($this->user('cashier'));

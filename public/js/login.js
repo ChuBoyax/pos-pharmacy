@@ -1,9 +1,9 @@
 (async () => {
     // Already signed in? Skip straight to the dashboard.
     if (Auth.token()) {
-        const { ok } = await Auth.api('/user');
-        if (ok) return (location.href = '/dashboard');
-        Auth.clear();
+        const res = await Auth.api('/user').catch(() => null);
+        if (res?.ok) return (location.href = '/dashboard');
+        if (res) Auth.clear();
     }
 
     const $ = (id) => document.getElementById(id);
@@ -46,7 +46,7 @@
         const { ok, status, data } = await Auth.api('/login', {
             method: 'POST',
             body: JSON.stringify({ email: $('email').value.trim(), password: $('password').value }),
-        });
+        }).catch(() => ({ ok: false, status: 0, data: null })); // no connection: don't spin forever
 
         if (ok) {
             Auth.save(data.token, data.user);
@@ -60,7 +60,9 @@
             setError('email', data.errors.email?.[0]);
             setError('password', data.errors.password?.[0]);
         } else {
-            $('alert').textContent = status === 429 ? 'Too many attempts. Please wait a minute and try again.' : 'Something went wrong. Please try again.';
+            $('alert').textContent = status === 429 ? 'Too many attempts. Please wait a minute and try again.'
+                : status === 0 ? 'Cannot reach the server. Check your connection.'
+                : 'Something went wrong. Please try again.';
             $('alert').classList.add('show');
         }
     });
